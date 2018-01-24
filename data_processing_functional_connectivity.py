@@ -46,9 +46,9 @@ def preform_pca_on_functional_connectivity(input_path, output_path,
         paths_list += [os.path.join(dir, name) for name in files
                           if fnmatch.fnmatch(name, pattern)]
 
-    phases = np.zeros((brain_areas, t_phases))
-    iFC = np.zeros((brain_areas, brain_areas))
-    pca_components = np.zeros((n_subjects, t_phases, brain_areas))
+    phases = np.full((brain_areas, t_phases))
+    iFC = np.full((brain_areas, brain_areas))
+    pca_components = np.full((n_subjects, t_phases, brain_areas))
 
     for path in paths_list:
         array = np.genfromtxt(path, delimiter=',')
@@ -97,7 +97,7 @@ def dynamic_functional_connectivity(input_path, output_path):
     :return: FCD matrix
     :rtype: np.ndarray
     """
-    FCD = np.zeros((n_subjects, t_phases - 2, t_phases - 2))
+    FCD = np.full((n_subjects, t_phases - 2, t_phases - 2))
     pca_components = np.genfromtxt(input_path, delimiter=',')
 
     # Compute the FCD matrix for each subject as cosine similarity over time
