@@ -31,7 +31,7 @@ def kmeans_clustering(input_path, output_path):
         n_clusters.append(clusters)
         clusterer = KMeans(n_clusters=clusters)
         cluster_labels = clusterer.fit_predict(flatten_vector)
-        # perform the silhouette analysis
+        # perform the silhouette analysis as a metric for the clustering model
         silhouette_avg = silhouette_score(flatten_vector, cluster_labels)
         print('For n_clusters =', clusters,
               'The average silhouette_score is :', silhouette_avg)
