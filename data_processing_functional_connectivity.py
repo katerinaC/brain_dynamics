@@ -13,6 +13,7 @@ import os
 
 import numpy as np
 import pylab
+import h5py
 
 from scipy import signal
 from sklearn.decomposition import PCA
@@ -25,10 +26,10 @@ t_phases = 175
 n_subjects = 98
 
 
-def preform_pca_on_functional_connectivity(input_path, output_path,
-                                           pattern='.csv'):
+def preform_pca_on_instant_connectivity(input_path, output_path,
+                                        pattern):
     """
-    Computes the functional connectivity of brain areas with performing 
+    Computes the instant connectivity of brain areas with performing 
     a PCA returning its matrix.
 
     :param input_path: path to directory with all .csv files 
@@ -51,7 +52,11 @@ def preform_pca_on_functional_connectivity(input_path, output_path,
     pca_components = np.full((n_subjects, t_phases, brain_areas))
 
     for path in paths_list:
-        array = np.genfromtxt(path, delimiter=',')
+        if pattern == '.csv':
+            array = np.genfromtxt(path, delimiter=',')
+        elif pattern == '.mat':
+            data = h5py.File(path, 'r')
+            array = np.array(data)
         for area in range(0, brain_areas):
             time_series = pylab.demean(signal.detrend(array[:, area]))
             phases[area, :] = np.angle(signal.hilbert(time_series))
@@ -86,19 +91,18 @@ def preform_pca_on_functional_connectivity(input_path, output_path,
     return pca_components
 
 
-def dynamic_functional_connectivity(input_path, output_path):
+def dynamic_functional_connectivity(pca_components, output_path):
     """
     Computes the functional connectivity dynamics of brain areas.
 
-    :param input_path: path to directory with PCA matrix
-    :type input_path: str
+    :param pca_components: PCA components matrix
+    :type pca_components: np.ndarray
     :param output_path: path to output directory 
     :type output_path: str
     :return: FCD matrix
     :rtype: np.ndarray
     """
     FCD = np.full((n_subjects, t_phases - 2, t_phases - 2))
-    pca_components = np.genfromtxt(input_path, delimiter=',')
 
     # Compute the FCD matrix for each subject as cosine similarity over time
     for subject in range(0, n_subjects):

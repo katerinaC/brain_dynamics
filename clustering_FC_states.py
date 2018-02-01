@@ -4,25 +4,24 @@ the best number or clusters.
 
 Katerina Capouskova 2018, kcapouskova@hotmail.com
 """
-
+import os
 import numpy as np
 from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_score
 
 
-def kmeans_clustering(input_path, output_path):
+def kmeans_clustering(pca_components, output_path):
     """
     Performs a K-means clustering with silhouette analysis
 
-    :param input_path: path to directory with PCA matrix
-    :type input_path: str
+    :param pca_components: PCA matrix
+    :type pca_components: np.ndarray
     :param output_path: path to output directory 
     :type output_path: str
-    :return: FCD matrix
+    :return: clustered matrix
     :rtype: np.ndarray
     """
 
-    pca_components = np.genfromtxt(input_path, delimiter=',')
     # collapse a matrix into one dimension to prepare for K-means clustering
     flatten_vector = pca_components.flatten()
     results = []
@@ -37,6 +36,10 @@ def kmeans_clustering(input_path, output_path):
               'The average silhouette_score is :', silhouette_avg)
         results.append(silhouette_avg)
     # select the best performing number of clusters
-    max_result = max(results)
-    index_of_best = results.index(max_result)
+    index_of_best = results.index(max(results))
     print('The best number of clusters:', n_clusters[index_of_best])
+    best_clusterer = KMeans(n_clusters=n_clusters[index_of_best])
+    clusters = best_clusterer.fit_predict(flatten_vector)
+    np.savetxt(os.path.join(output_path, 'clustered_matrix'),
+               clusters, delimiter=',')
+    return clusters
