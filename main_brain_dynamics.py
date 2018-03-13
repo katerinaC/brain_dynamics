@@ -7,7 +7,7 @@ Katerina Capouskova 2018, kcapouskova@hotmail.com
 import argparse
 import os
 
-from clustering_FC_states import kmeans_clustering
+from modeling_FC_states import kmeans_clustering
 from data_processing_functional_connectivity import \
     preform_pca_on_instant_connectivity, dynamic_functional_connectivity, \
     preform_lle_on_instant_connectivity
@@ -35,9 +35,9 @@ def parse_args():
                         help='Number of time phases', required=True)
     parser.add_argument('--subjects', type=int,
                         help='Number of participating subjects', required=True)
-    parser.add_argument('--pca', action='store-true', default=True,
+    parser.add_argument('--pca', action='store_true', default=False,
                         help='Perform PCA data dimension reduction', required=False)
-    parser.add_argument('--lle', action='store-true', default=False,
+    parser.add_argument('--lle', action='store_true', default=False,
                         help='Perform Locally Linear Embedding data dimension '
                              'reduction', required=False)
     return parser.parse_args()
@@ -65,7 +65,7 @@ def main():
     if pca:
         paths_list = return_paths_list(input_path, output_path, pattern)
         pca_components = preform_pca_on_instant_connectivity(paths_list, output_path,
-                                                             pattern, brain_areas,
+                                                             brain_areas,
                                                              t_phases, n_subjects)
         fcd_matrix = dynamic_functional_connectivity(pca_components, output_path,
                                                      t_phases, n_subjects)
@@ -76,7 +76,6 @@ def main():
         paths_list = return_paths_list(input_path, output_path, pattern)
         lle_components = preform_lle_on_instant_connectivity(paths_list,
                                                              output_path,
-                                                             pattern,
                                                              brain_areas,
                                                              t_phases,
                                                              n_subjects)

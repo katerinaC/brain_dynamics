@@ -32,9 +32,9 @@ def plot_functional_connectivity_matrix(fcd_matrix, output_path):
     plt.savefig(os.path.join(output_path, 'FCD_matrix_heatmap.png'))
 
 
-def plot_clustering():
+def plot_hidden_states():
     """
-    Plots the clusters of states
+    Plots the hidden states of Hidden Markov Model
 
     :param fcd_matrix: functional connectivity matrix
     :type fcd_matrix: np.ndarray

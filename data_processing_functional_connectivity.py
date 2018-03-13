@@ -118,11 +118,11 @@ def preform_lle_on_instant_connectivity(paths_list, output_path, brain_areas,
                         else:
                             iFC[i, z] = np.absolute(phases[i, t] - phases[z, t])
                 lle, err = manifold.locally_linear_embedding(iFC, n_neighbors=12,
-                                                             n_components=2)
+                                                             n_components=1)
                 with open(os.path.join(output_path, 'LLE_error_{}'.format(t)),
                           'w') as output:
                     json.dump(err, output)
-                lle_components[paths_list.index(path), t, :] = lle
+                lle_components[paths_list.index(path), t, :] = np.squeeze(lle)
 
     # save the PCA matrix into a .csv file
     np.savez(os.path.join(output_path, 'LLE_components_matrix'), lle_components)
