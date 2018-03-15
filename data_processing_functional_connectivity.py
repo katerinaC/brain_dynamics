@@ -153,7 +153,8 @@ def dynamic_functional_connectivity(reduced_components, output_path, t_phases,
             vec_1 = np.squeeze(reduced_components[subject, t1, :])
             for t2 in tqdm(range(0, t_phases)):
                 vec_2 = np.squeeze(reduced_components[subject, t2, :])
-                FCD[subject, t1, t2] = np.dot(vec_1, vec_2) / np.linalg.norm(
-                    vec_1) / np.linalg.norm(vec_2)
+                # cosine similarity
+                FCD[subject, t1, t2] = np.dot(vec_1, vec_2) / (np.linalg.norm(
+                    vec_1) * np.linalg.norm(vec_2))
     np.savez(os.path.join(output_path, 'FCD_matrix'), FCD)
     return FCD

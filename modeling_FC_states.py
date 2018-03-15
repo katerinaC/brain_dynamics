@@ -59,25 +59,32 @@ def hidden_markov_model(reduced_components, output_path):
     :type reduced_components: np.ndarray
     :param output_path: path to output directory 
     :type output_path: str
-    :return: predicted matrix, probabilities matrix
-    :rtype: np.ndarray, np.ndarray
+    :return: predicted matrix, probabilities matrix, number of components, 
+    markov array
+    :rtype: np.ndarray, np.ndarray, int, np.ndarray
     """
+    samples, timesteps, features = reduced_components.shape
+    components_swapped = np.swapaxes(reduced_components, 0, 1)
+    reduced_components_2d = np.reshape(components_swapped, (timesteps, (samples*features)))
     results = []
     n_components = []
     for component in tqdm(range(2,20)):
         n_components.append(component)
-        model = hmm.GaussianHMM(n_components=component, covariance_type="full")
-        model.fit(reduced_components)
-        log_likelihood = model.score(reduced_components)
+        model = hmm.GaussianHMM(n_components=component, covariance_type="diag")
+        model.fit(reduced_components_2d)
+        log_likelihood = model.score(reduced_components_2d)
         print 'For number of components:', component, 'the score is:', \
             log_likelihood
         results.append(log_likelihood)
     index_of_best = results.index(max(results))
     print 'The best number of components:', n_components[index_of_best]
     best_hmm = hmm.GaussianHMM(n_components=n_components[index_of_best],
-                               covariance_type="full")
-    hidden_states = best_hmm.predict(reduced_components)
+                               covariance_type="diag")
+    best_hmm.fit(reduced_components_2d)
+    hidden_states = best_hmm.predict(reduced_components_2d)
     np.savez(os.path.join(output_path, 'HMM_state_sequence'), hidden_states)
-    predict_proba = best_hmm.predict_proba(reduced_components)
+    predict_proba = best_hmm.predict_proba(reduced_components_2d)
     np.savez(os.path.join(output_path, 'HMM_posteriors'), predict_proba)
-    return hidden_states, predict_proba
+    hidden_states_expanded = np.expand_dims(hidden_states, axis=1)
+    markov_array = np.append(reduced_components_2d, hidden_states_expanded, axis=1)
+    return hidden_states, predict_proba, n_components[index_of_best], markov_array
