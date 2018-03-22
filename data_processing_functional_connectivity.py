@@ -50,9 +50,9 @@ def preform_pca_on_instant_connectivity(paths_list, output_path, brain_areas,
             # select by columns, transform to phase
             time_series = pylab.demean(signal.detrend(array[:, area]))
             phases[area, :] = np.angle(signal.hilbert(time_series))
-            for t in tqdm(range(0, t_phases)):
-                for i in tqdm(range(0, brain_areas)):
-                    for z in tqdm(range(0, brain_areas)):
+            for t in range(0, t_phases):
+                for i in range(0, brain_areas):
+                    for z in range(0, brain_areas):
                         if np.absolute(phases[i, t] - phases[z, t]) > np.pi:
                             iFC[i, z] = np.cos(2 * np.pi - np.absolute(
                                 phases[i, t] - phases[z, t]))
@@ -109,9 +109,9 @@ def preform_lle_on_instant_connectivity(paths_list, output_path, brain_areas,
             # select by columns, transform to phase
             time_series = pylab.demean(signal.detrend(array[:, area]))
             phases[area, :] = np.angle(signal.hilbert(time_series))
-            for t in tqdm(range(0, t_phases)):
-                for i in tqdm(range(0, brain_areas)):
-                    for z in tqdm(range(0, brain_areas)):
+            for t in range(0, t_phases):
+                for i in range(0, brain_areas):
+                    for z in range(0, brain_areas):
                         if np.absolute(phases[i, t] - phases[z, t]) > np.pi:
                             iFC[i, z] = np.cos(2 * np.pi - np.absolute(
                                 phases[i, t] - phases[z, t]))

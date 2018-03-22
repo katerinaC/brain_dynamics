@@ -84,4 +84,5 @@ def plot_hidden_states(hidden_states, n_components, markov_array, output_path):
     sns.despine(offset=10)
     fg.fig.suptitle('Different brain states according to HMM', fontsize=24,
                     fontweight='demi')
+    sns.plt.show()
     fg.savefig(os.path.join(output_path, 'Hidden Markov Model States.png'))

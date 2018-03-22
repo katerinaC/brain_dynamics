@@ -68,9 +68,9 @@ def hidden_markov_model(reduced_components, output_path):
     reduced_components_2d = np.reshape(components_swapped, (timesteps, (samples*features)))
     results = []
     n_components = []
-    for component in tqdm(range(2,20)):
+    for component in tqdm(range(1, 20)):
         n_components.append(component)
-        model = hmm.GaussianHMM(n_components=component, covariance_type="diag")
+        model = hmm.GMMHMM(n_components=component)
         model.fit(reduced_components_2d)
         log_likelihood = model.score(reduced_components_2d)
         print 'For number of components:', component, 'the score is:', \
@@ -78,8 +78,7 @@ def hidden_markov_model(reduced_components, output_path):
         results.append(log_likelihood)
     index_of_best = results.index(max(results))
     print 'The best number of components:', n_components[index_of_best]
-    best_hmm = hmm.GaussianHMM(n_components=n_components[index_of_best],
-                               covariance_type="diag")
+    best_hmm = hmm.GMMHMM(n_components=n_components[index_of_best])
     best_hmm.fit(reduced_components_2d)
     hidden_states = best_hmm.predict(reduced_components_2d)
     np.savez(os.path.join(output_path, 'HMM_state_sequence'), hidden_states)
