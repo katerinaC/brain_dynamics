@@ -28,9 +28,9 @@ def load_mat_save_as_csv(input_path, output_path):
     data = scipy.io.loadmat(input_path)
     for key in tqdm(data):
         if '__' not in key and 'readme' not in key and 'Subjects' not in key:
-            np.savetxt((os.path.join(output_path, data, key + '.csv')), data[key],
+            np.savetxt((os.path.join(output_path, 'data', key + '.csv')), data[key],
                        delimiter=',')
-    return os.path.join(output_path, data)
+    return os.path.join(output_path, 'data')
 
 
 def return_paths_list(input_path, output_path, pattern):

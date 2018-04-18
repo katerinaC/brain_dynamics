@@ -1,5 +1,6 @@
 """
-Script that computes functional connectivity dynamics
+Script that computes functional connectivity dynamics and does clustering of
+brain states.
 
 Katerina Capouskova 2018, kcapouskova@hotmail.com
 """
@@ -7,10 +8,11 @@ Katerina Capouskova 2018, kcapouskova@hotmail.com
 import argparse
 import os
 
-from modeling_FC_states import kmeans_clustering
 from data_processing_functional_connectivity import \
-    preform_pca_on_instant_connectivity, dynamic_functional_connectivity, \
-    preform_lle_on_instant_connectivity
+    convert_to_phases, \
+    preform_lle_on_dynamic_connectivity, preform_pca_on_dynamic_connectivity, \
+    functional_connectivity_dynamics
+from modeling_FC_states import kmeans_clustering
 from utilities import return_paths_list
 from visualizations import plot_functional_connectivity_matrix
 
@@ -64,25 +66,32 @@ def main():
 
     if pca:
         paths_list = return_paths_list(input_path, output_path, pattern)
-        pca_components = preform_pca_on_instant_connectivity(paths_list, output_path,
+        phases = convert_to_phases(paths_list, output_path, brain_areas, t_phases)
+        pca_components = preform_pca_on_dynamic_connectivity(phases, output_path,
                                                              brain_areas,
                                                              t_phases, n_subjects)
-        fcd_matrix = dynamic_functional_connectivity(pca_components, output_path,
+        fcd_matrix = functional_connectivity_dynamics(pca_components, output_path,
                                                      t_phases, n_subjects)
         clusters = kmeans_clustering(pca_components, output_path)
+        #hidden_states, predict_proba, n_components, markov_array = hidden_markov_model_pomegranate(
+            #pca_components, output_path)
+        #plot_hidden_states(hidden_states, n_components, markov_array, output_path)
         plot_functional_connectivity_matrix(fcd_matrix, output_path)
 
     if lle:
         paths_list = return_paths_list(input_path, output_path, pattern)
-        lle_components = preform_lle_on_instant_connectivity(paths_list,
-                                                             output_path,
+        phases = convert_to_phases(paths_list, output_path, brain_areas, t_phases)
+        lle_components = preform_lle_on_dynamic_connectivity(phases, output_path,
                                                              brain_areas,
                                                              t_phases,
                                                              n_subjects)
-        fcd_matrix = dynamic_functional_connectivity(lle_components,
+        fcd_matrix = functional_connectivity_dynamics(lle_components,
                                                      output_path,
                                                      t_phases, n_subjects)
         clusters = kmeans_clustering(lle_components, output_path)
+        #hidden_states, predict_proba, n_components, markov_array = hidden_markov_model_pomegranate(
+            #lle_components, output_path)
+        #plot_hidden_states(hidden_states, n_components, markov_array, output_path)
         plot_functional_connectivity_matrix(fcd_matrix, output_path)
 
 if __name__ == '__main__':
