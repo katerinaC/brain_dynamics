@@ -12,11 +12,10 @@ Katerina Capouskova 2018, kcapouskova@hotmail.com
 """
 
 import logging
-import os
-import numpy as np
 
-from pomegranate import *
+import numpy as np
 from hmmlearn import hmm
+from pomegranate import *
 from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_score, silhouette_samples
 from tqdm import tqdm

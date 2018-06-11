@@ -7,4 +7,6 @@ tqdm>=4.9.0
 hmmlearn
 seaborn==0.7.1
 nitime>=0.7
+pomegranate
+
 

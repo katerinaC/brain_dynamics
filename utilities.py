@@ -3,7 +3,7 @@ Utilities file for different operations to be used in the processing scripts.
 
 Katerina Capouskova 2018, kcapouskova@hotmail.com
 """
-
+import json
 import os
 
 import numpy as np
@@ -131,6 +131,7 @@ def convert_components(input_path, output_path):
         pass
     array = return_empty_array_rows_columns(input_path, output_path)
     start = [0]
+    dict = {}
     for path in input_path:
         reduced_components = np.load(path)
         reduced_components = reduced_components['arr_0']
@@ -142,9 +143,13 @@ def convert_components(input_path, output_path):
         rows, columns = reduced_components_2d.shape
         array[start[input_path.index(path)]: (start[input_path.index(path)]+rows),
         0:features] = reduced_components_2d
+        dict.update({os.path.dirname(path): (start[input_path.index(path)],
+                                              start[input_path.index(path)]+rows)})
         start.append((rows + start[input_path.index(path)]))
     np.savez(os.path.join(output_path,
                           'concatenated_reduced_components'), array)
+    with open(os.path.join(output_path, 'arrays_starts.json'), 'w') as fp:
+        json.dump(dict, fp)
     return array
 
 
