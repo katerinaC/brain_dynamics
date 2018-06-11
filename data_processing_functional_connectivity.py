@@ -12,63 +12,69 @@ import json
 import os
 
 import numpy as np
+import pandas as pd
 import pylab
-
 from scipy import signal
 from sklearn import manifold
 from sklearn.decomposition import PCA
 from tqdm import tqdm
 
+from utilities import return_paths_list
 
-def convert_to_phases(paths_list, output_path, brain_areas, t_phases):
+
+def convert_to_phases(input_path, output_path, brain_areas, t_phases, subject):
     """
     Converts raw data into phases by Hilbert Transform
 
-    :param paths_list: list of all paths
-    :type paths_list: []
+    :param input_path: path to input file
+    :type input_path: str
     :param output_path: path to output directory
     :type output_path: str
     :param brain_areas: number of brain areas
     :type brain_areas: int
     :param t_phases: number of time phases
     :type t_phases: int
+    :param subject: subject number
+    :type subject: int
     :return: phases matrix
     :rtype: np.ndarray
     """
     phases = np.full((brain_areas, t_phases), fill_value=0).astype(np.float64)
-    for path in tqdm(paths_list):
-        array = np.genfromtxt(path, delimiter=',')
-        for area in tqdm(range(0, brain_areas)):
-            # select by columns, transform to phase
-            time_series = pylab.demean(signal.detrend(array[:, area]))
-            phases[area, :] = np.angle(signal.hilbert(time_series))
-    np.savez(os.path.join(output_path, 'phases'), phases)
+    array = np.genfromtxt(input_path, delimiter=',')
+    for area in tqdm(range(0, brain_areas)):
+        # select by columns, transform to phase
+        time_series = pylab.demean(signal.detrend(array[:, area]))
+        phases[area, :] = np.angle(signal.hilbert(time_series))
+    np.savez(os.path.join(output_path, 'phases_{}'.format(subject)), phases)
     return phases
 
 
-def preform_pca_on_dynamic_connectivity(phases, output_path, brain_areas,
-                                        t_phases, n_subjects):
+def preform_pca_on_dynamic_connectivity(input_path, output_path, brain_areas,
+                                        pattern):
     """
     Computes the dynamic connectivity of brain areas with performing
     a PCA returning its matrix.
 
-    :param phases: phases matrix (areas X time)
-    :type phases: np.ndarray
+    :param input_path: path to input dir
+    :type input_path: str
     :param output_path: path to output directory 
     :type output_path: str
     :param brain_areas: number of brain areas
     :type brain_areas: int
-    :param t_phases: number of time phases
-    :type t_phases: int
-    :param n_subjects: number of subjects 
-    :type n_subjects: int
-    :return: PCA matrix
-    :rtype: np.ndarray
+    :param pattern: pattern of input files
+    :type pattern: str
+    :return: PCA matrix, PCA matrix shape
+    :rtype: np.ndarray, tuple
     """
+    paths = return_paths_list(input_path, output_path, pattern=pattern)
+    n_subjects = len(paths)
+    array = np.genfromtxt(paths[0], delimiter=',')
+    t_phases = array.shape[0]
     dFC = np.full((brain_areas, brain_areas), fill_value=0).astype(np.float64)
     pca_components = np.full((n_subjects, t_phases, (brain_areas * 2)),
                              fill_value=0).astype(np.float64)
     for n in tqdm(range(n_subjects)):
+        phases = convert_to_phases(paths[n], output_path, brain_areas, t_phases, n)
         for t in range(0, t_phases):
             for i in range(0, brain_areas):
                 for z in range(0, brain_areas):
@@ -95,33 +101,37 @@ def preform_pca_on_dynamic_connectivity(phases, output_path, brain_areas,
             pca_components[n, t, :] = \
                 pca_dict['components'][0] + pca_dict['components'][1]
     # save the PCA matrix into a .csv file
-    np.savez(os.path.join(output_path, 'PCA_components_matrix'), pca_components)
-    return pca_components
+    np.savez(os.path.join(output_path, 'components_matrix'), pca_components)
+    return pca_components, pca_components.shape
 
 
-def preform_lle_on_dynamic_connectivity(phases, output_path, brain_areas,
-                                        t_phases, n_subjects):
+def preform_lle_on_dynamic_connectivity(input_path, output_path, brain_areas,
+                                        pattern):
     """
     Computes the dynamic connectivity of brain areas with performing
     a locally linear embedding returning its matrix.
 
-    :param phases: phases matrix (areas X time)
-    :type phases: np.ndarray
+    :param input_path: path to input dir
+    :type input_path: str
     :param output_path: path to output directory 
     :type output_path: str
     :param brain_areas: number of brain areas
     :type brain_areas: int
-    :param t_phases: number of time phases
-    :type t_phases: int
-    :param n_subjects: number of subjects 
-    :type n_subjects: int
-    :return: LLE matrix
-    :rtype: np.ndarray
+    :param pattern: pattern of input files
+    :type pattern: str
+    :return: LLE matrix, LLE matrix shape
+    :rtype: np.ndarray, tuple
     """
+    paths = return_paths_list(input_path, output_path, pattern=pattern)
+    n_subjects = len(paths)
+    df = pd.read_csv(paths[0])
+    t_phases = df.shape[0]
     dFC = np.full((brain_areas, brain_areas), fill_value=0).astype(np.float64)
     lle_components = np.full((n_subjects, t_phases, (brain_areas * 2)),
                              fill_value=0).astype(np.float64)
     for n in tqdm(range(0, n_subjects)):
+        phases = convert_to_phases(paths[n], output_path, brain_areas, t_phases,
+                                   n)
         for t in range(0, t_phases):
             for i in range(0, brain_areas):
                 for z in range(0, brain_areas):
@@ -138,12 +148,11 @@ def preform_lle_on_dynamic_connectivity(phases, output_path, brain_areas,
                 json.dump(err, output)
             lle_components[n, t, :] = np.squeeze(lle.flatten())
     # save the LLE matrix into a .npz file
-    np.savez(os.path.join(output_path, 'LLE_components_matrix'), lle_components)
-    return lle_components
+    np.savez(os.path.join(output_path, 'components_matrix'), lle_components)
+    return lle_components, lle_components.shape
 
 
-def functional_connectivity_dynamics(reduced_components, output_path, t_phases,
-                                     n_subjects):
+def functional_connectivity_dynamics(reduced_components, output_path):
     """
     Computes the functional connectivity dynamics of brain areas.
 
@@ -151,13 +160,10 @@ def functional_connectivity_dynamics(reduced_components, output_path, t_phases,
     :type reduced_components: np.ndarray
     :param output_path: path to output directory 
     :type output_path: str
-    :param t_phases: number of time phases
-    :type t_phases: int
-    :param n_subjects: number of subjects 
-    :type n_subjects: int
     :return: FCD matrix
     :rtype: np.ndarray
     """
+    n_subjects, t_phases, brain_areas_2 = reduced_components.shape
     FCD = np.full((n_subjects, t_phases, t_phases), fill_value=0)\
         .astype(np.float64)
     # Compute the FCD matrix for each subject as cosine similarity over time

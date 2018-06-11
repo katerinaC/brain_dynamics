@@ -4,13 +4,12 @@ Visualization tools for functional connectivity dynamics.
 Katerina Capouskova 2018, kcapouskova@hotmail.com
 """
 import os
-import pandas as pd
+
 import matplotlib.pyplot as plt
-import nitime.timeseries as ts
 import numpy as np
+import pandas as pd
 import seaborn as sns
 from matplotlib import cm
-from nitime.analysis import CoherenceAnalyzer
 
 sns.set()
 
@@ -25,7 +24,7 @@ def plot_functional_connectivity_matrix(fcd_matrix, output_path):
     :type output_path: str
     """
     fig, ax = plt.subplots(1)
-    heat_map = sns.heatmap(fcd_matrix[1, :, :], cmap='hsv', ax=ax,
+    heat_map = sns.heatmap(fcd_matrix[1, :, :], cmap='jet', ax=ax,
                            square=True)
     plt.xlabel('Time (seconds)')
     plt.ylabel('Time (seconds)')
@@ -136,20 +135,166 @@ def dash_plot_timeseries(instant_connectivity, output_path):
     plt.show()
 
 
-def plot_states_line(cluster_states, output_path):
+def plot_states_line(cluster_states, t_phases, output_path):
     """
-    Plots the states in one line.
+    Plots the states in one line of one subejct.
 
     :param cluster_states: array representing clustered states
     :type cluster_states: np.ndarray
+    :param t_phases: number of time phases
+    :type t_phases: int
     :param output_path: path to output directory
     :type output_path: str
     """
     plt.style.use('seaborn-whitegrid')
     fig = plt.figure()
     ax = plt.axes()
-    ax.plot(cluster_states, '-y')
+    ax.plot(cluster_states[0:t_phases], '-y')
     plt.savefig(os.path.join(output_path, 'clustered_states_plot.png'))
     plt.show()
 
 
+def plot_variance(labels, variance, output_path):
+    """
+    Plots the states' variances.
+
+    :param labels: array representing labels
+    :type labels: np.ndarray
+    :param variance: array representing variance
+    :type variance: np.ndarray
+    :param output_path: path to output directory
+    :type output_path: str
+    """
+    fig, ax = plt.subplots(1)
+    violin = sns.violinplot(x=labels, y=variance, inner='quartile')
+    plt.xlabel('States')
+    plt.ylabel('Variance')
+    plt.savefig(os.path.join(output_path, 'States variance.png'))
+    plt.show()
+
+
+def plot_probabilities_barplots(input_path, output_path):
+    """
+    Plots the states' probabilities histogram.
+
+    :param input_path: path to input
+    :type input_path: str
+    :param output_path: path to output directory
+    :type output_path: str
+    """
+    data = pd.read_csv(input_path, delimiter=';')
+    sns.set(style="whitegrid")
+
+    # Draw a nested barplot
+    g = sns.factorplot(x='State', y='Probability', hue='Condition',
+                       size=6, kind='bar', palette='muted', data=data)
+    g.despine(left=True)
+    g.set_ylabels('Probability')
+    plt.savefig(os.path.join(output_path, 'States probabilities cond.png'))
+    plt.show()
+
+
+def plot_lifetimes_barplots(input_path, output_path):
+    """
+    Plots the states' lifetimes histogram.
+
+    :param input_path: path to input
+    :type input_path: str
+    :param output_path: path to output directory
+    :type output_path: str
+    """
+    data = pd.read_csv(input_path, delimiter=';')
+    sns.set(style="whitegrid")
+
+    # Draw a nested barplot
+    g = sns.factorplot(x='State', y='Mean_lifetime', hue='Condition',
+                       size=6, kind='bar', palette='muted', data=data)
+    g.despine(left=True)
+    g.set_ylabels('Mean lifetime of a state (seconds)')
+    plt.savefig(os.path.join(output_path, 'States lifetimes cond.png'))
+    plt.show()
+
+
+def plot_silhouette_analysis(X, output_path, n_clusters, silhouette_avg,
+                             sample_silhouette_values, cluster_labels, centers):
+    """
+    Plots the Silhouette analysis for clustering algorithm.
+
+    :param X: clustering input features
+    :type X: np.ndarray
+    :param output_path: path to output directory
+    :type output_path: str
+    :param n_clusters: number of clusters
+    :type n_clusters: int
+    :param silhouette_avg: silhouette average score
+    :type silhouette_avg: float
+    :param sample_silhouette_values: silhouette scores for each sample
+    :type sample_silhouette_values: float
+    :param cluster_labels: cluster labels
+    :type cluster_labels: int
+    :param centers: coordinates of cluster centers
+    :type centers: array, [n_clusters, n_features]
+    """
+    # Create a subplot with 1 row and 2 columns
+    fig, (ax1, ax2) = plt.subplots(1, 2)
+    fig.set_size_inches(18, 7)
+
+    # The 1st subplot is the silhouette plot
+    # The silhouette coefficient can range from -1, 1 but in this example all
+    # lie within [-0.1, 1]
+    ax1.set_xlim([-0.1, 1])
+    y_lower = 10
+    for i in range(n_clusters):
+        # Aggregate the silhouette scores for samples belonging to
+        # cluster i, and sort them
+        ith_cluster_silhouette_values = \
+            sample_silhouette_values[cluster_labels == i]
+
+        ith_cluster_silhouette_values.sort()
+
+        size_cluster_i = ith_cluster_silhouette_values.shape[0]
+        y_upper = y_lower + size_cluster_i
+
+        color = ['darkorange', 'mediumslateblue', 'mediumaquamarine', 'orchid',
+                 'steelblue', 'lightgreen', 'lightslategrey', 'darksalmon']
+        ax1.fill_betweenx(np.arange(y_lower, y_upper),
+                          0, ith_cluster_silhouette_values,
+                          facecolor=color[i], edgecolor=color[i], alpha=0.7)
+
+        # Label the silhouette plots with their cluster numbers at the middle
+        ax1.text(-0.05, y_lower + 0.5 * size_cluster_i, str(i))
+
+        # Compute the new y_lower for next plot
+        y_lower = y_upper + 10  # 10 for the 0 samples
+
+    ax1.set_title("The silhouette plot for the various clusters.")
+    ax1.set_xlabel("The silhouette coefficient values")
+    ax1.set_ylabel("Cluster label")
+
+    # The vertical line for average silhouette score of all the values
+    ax1.axvline(x=silhouette_avg, color="orangered", linestyle="--")
+
+    ax1.set_yticks([])  # Clear the yaxis labels / ticks
+    ax1.set_xticks([-0.1, 0, 0.2, 0.4, 0.6, 0.8, 1])
+
+    # 2nd Plot showing the actual clusters formed
+    colors = plt.get_cmap('Spectral')(np.linspace(0, 1, 10))
+    ax2.scatter(X[:, 0], X[:, 1], marker='.', s=30, lw=0, alpha=0.7,
+                c=colors, edgecolor='k')
+    # Draw white circles at cluster centers
+    ax2.scatter(centers[:, 0], centers[:, 1], marker='o',
+                c="white", alpha=1, s=200, edgecolor='k')
+
+    for i, c in enumerate(centers):
+        ax2.scatter(c[0], c[1], marker='$%d$' % i, alpha=1,
+                    s=50, edgecolor='k')
+
+    ax2.set_title("The visualization of the clustered data.")
+    ax2.set_xlabel("Feature space for the 1st feature")
+    ax2.set_ylabel("Feature space for the 2nd feature")
+
+    plt.suptitle(("Silhouette analysis for KMeans clustering on sample data "
+                  "with n_clusters = %d" % n_clusters),
+                 fontsize=14, fontweight='bold')
+    plt.savefig(os.path.join(output_path, 'Clustering_{}.png'.format(n_clusters)))
+    plt.show()
