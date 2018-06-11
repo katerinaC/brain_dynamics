@@ -18,8 +18,11 @@ import numpy as np
 from pomegranate import *
 from hmmlearn import hmm
 from sklearn.cluster import KMeans
-from sklearn.metrics import silhouette_score
+from sklearn.metrics import silhouette_score, silhouette_samples
 from tqdm import tqdm
+
+from states_features import probability_of_state, mean_lifetime_of_state
+from visualizations import plot_silhouette_analysis
 
 
 def kmeans_clustering(reduced_components, output_path):
@@ -30,36 +33,89 @@ def kmeans_clustering(reduced_components, output_path):
     :type reduced_components: np.ndarray
     :param output_path: path to output directory 
     :type output_path: str
-    :return: clustered matrix
+    :return: clustered array
     :rtype: np.ndarray
     """
-    logging.basicConfig(filename=os.path.join(output_path, 'clustering_FC_states.log'),
+    logging.basicConfig(filename=os.path.join(output_path,
+                                              'clustering_FC_states.log'),
                         level=logging.INFO)
-    # collapse a matrix into 2 dimensions to prepare for K-means clustering
     samples, timesteps, features = reduced_components.shape
-    components_swapped = np.swapaxes(reduced_components, 0, 1)
-    # new matrix (time steps x number of features (subjects x brain areas))
-    reduced_components_2d = np.reshape(components_swapped, (timesteps, (samples*features)))
+    # new matrix ((time steps x subjects) x number of features(brain areas * n_components))
+    reduced_components_2d = np.reshape(reduced_components, (samples * timesteps, features))
     results = []
     n_clusters = []
-    for clusters in tqdm(range(39, 80)):
+    for clusters in tqdm(range(2, 3)):
         n_clusters.append(clusters)
-        clusterer = KMeans(n_clusters=clusters)
-        cluster_labels = clusterer.fit_predict(reduced_components_2d)
+        kmeans = KMeans(n_clusters=clusters).fit(reduced_components_2d)
         # perform the silhouette analysis as a metric for the clustering model
-        silhouette_avg = silhouette_score(reduced_components_2d, cluster_labels, sample_size=300)
+        silhouette_avg = silhouette_score(reduced_components_2d, kmeans.labels_,
+                                          sample_size=300)
         logging.info('For n_clusters = {}, the average silhouette score is: {}'
                      .format(clusters, silhouette_avg))
+        cluster_center, sum_sqr_d = kmeans.cluster_centers_, kmeans.inertia_
+        logging.info('For n_clusters = {}, the cluster centers are: {} and the '
+                     'sum of squared distances of samples to their closest '
+                     'cluster center are: {}'.format(clusters, cluster_center,
+                                                     sum_sqr_d))
         results.append(silhouette_avg)
     # select the best performing number of clusters
     index_of_best = results.index(max(results))
     logging.info('The best number of clusters: {}'.format(
         n_clusters[index_of_best]))
     best_clusterer = KMeans(n_clusters=n_clusters[index_of_best])
-    clusters = best_clusterer.fit_predict(reduced_components_2d)
-    np.savez(os.path.join(output_path, 'clustered_matrix'), clusters)
-    data_clusters = {'reduced_components_2d': reduced_components_2d, 'clusters': clusters}
-    return clusters
+    clusters_array = best_clusterer.fit_predict(reduced_components_2d)
+    np.savez(os.path.join(output_path, 'clustered_matrix'), clusters_array)
+    probability_of_state(clusters_array, n_clusters[index_of_best], output_path)
+    mean_lifetime_of_state(clusters_array, n_clusters[index_of_best], output_path)
+    data_clusters = {'reduced_components': reduced_components_2d, 'clusters': clusters_array}
+    return clusters_array
+
+
+def kmeans_clustering_mean_score(reduced_components, output_path, n_clusters):
+    """
+    Performs a K-means clustering with pre-set number of clusters more times and
+    returns the average silhouette score
+
+    :param reduced_components: reduced components matrix
+    :type reduced_components: np.ndarray
+    :param output_path: path to output directory
+    :type output_path: str
+    :param n_clusters: number of clusters
+    :type n_clusters: int
+    :return: clustered array, features array with labels
+    :rtype: np.ndarray, np.ndarray
+    """
+    logging.basicConfig(filename=os.path.join(output_path,
+                                              'clustering_FC_states_mean_score.log'),
+                        level=logging.INFO)
+    results = []
+    for iter in tqdm(range(10)):
+        kmeans = KMeans(n_clusters=n_clusters).fit(reduced_components)
+        # perform the silhouette analysis as a metric for the clustering model
+        silhouette = silhouette_score(reduced_components, kmeans.labels_,
+                                      sample_size=500)
+        logging.info('For iteration = {}, the average silhouette score is: {}'
+                     .format(iter, silhouette))
+        cluster_center, sum_sqr_d = kmeans.cluster_centers_, kmeans.inertia_
+        logging.info('For iteration = {}, the cluster centers are: {} and the '
+                     'sum of squared distances of samples to their closest '
+                     'cluster center are: {}'.format(iter, cluster_center,
+                                                     sum_sqr_d))
+        results.append(silhouette)
+        clusters_array = kmeans.predict(reduced_components)
+        sample_silhouette_values = silhouette_samples(reduced_components,
+                                                      clusters_array)
+    # average silhouette score
+    avg_silhouette = sum(results)/float(len(results))
+    logging.info('The average silhouette score: {}'.format(avg_silhouette))
+    np.savez(os.path.join(output_path, 'clustered_matrix'), clusters_array)
+    probability_of_state(clusters_array, n_clusters, output_path)
+    mean_lifetime_of_state(clusters_array, n_clusters, output_path)
+    plot_silhouette_analysis(reduced_components, output_path, n_clusters, avg_silhouette,
+                             sample_silhouette_values, clusters_array, cluster_center)
+    clusters_array = np.expand_dims(clusters_array, axis=1)
+    data_clusters = np.hstack((reduced_components, clusters_array))
+    return clusters_array, data_clusters
 
 
 def hidden_markov_model(reduced_components, output_path):
@@ -151,3 +207,58 @@ def hidden_markov_model_pomegranate(reduced_components, output_path):
     markov_array = np.append(reduced_components_2d, hidden_states_expanded, axis=1)
     return hidden_states, predict_proba, n_components[index_of_best], \
            markov_array
+
+
+def kmeans_clustering_missing(reduced_components, output_path,
+                              n_clusters=2, max_iter=10):
+    """
+    Performs a K-means clustering with missing data.
+
+    :param reduced_components: reduced components matrix
+    :type reduced_components: np.ndarray
+    :param output_path: path to output directory
+    :type output_path: str
+    :param n_clusters: number of clusters
+    :type n_clusters: int
+    :param max_iter: maximum iterations for convergence
+    :type max_iter: int
+    :return: clustered array, centroids of clusters, filled matrix
+    :rtype: np.ndarray, list, np.ndarray
+    """
+    logging.basicConfig(filename=os.path.join(output_path,
+                                              'clustering_FC_states_missing.log'),
+                        level=logging.INFO)
+    # Initialize missing values to their column means
+    missing = ~np.isfinite(reduced_components)
+    mu = np.nanmean(reduced_components, axis=0)
+    X_filled = np.where(missing, mu, reduced_components)
+
+    for i in tqdm(range(max_iter)):
+        if i > 0:
+            # k means with previous centroids
+            cls = KMeans(n_clusters, init=prev_centroids)
+        else:
+            # do multiple random initializations in parallel
+            cls = KMeans(n_clusters, n_jobs=-1)
+        # perform clustering on the filled-in data
+        labels = cls.fit_predict(X_filled)
+        centroids = cls.cluster_centers_
+        # fill in the missing values based on their cluster centroids
+        X_filled[missing] = centroids[labels][missing]
+        # when the labels have stopped changing then we have converged
+        if i > 0 and np.all(labels == prev_labels):
+            break
+
+        prev_labels = labels
+        prev_centroids = cls.cluster_centers_
+        # perform the silhouette analysis as a metric for the clustering model
+    silhouette_avg = silhouette_score(X_filled, cls.labels_,
+                                          sample_size=300)
+    logging.info('For n_clusters = {}, the average silhouette score is: {}'
+                     .format(n_clusters, silhouette_avg))
+    logging.info('For n_clusters = {}, the cluster centers are: {} and the '
+                     'sum of squared distances of samples to their closest '
+                     'cluster center are: {}'.format(n_clusters, centroids,
+                                                     cls.inertia_))
+    np.savez(os.path.join(output_path, 'clustered_matrix'), labels)
+    return labels, centroids, X_filled
