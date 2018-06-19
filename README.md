@@ -1,6 +1,6 @@
 # Functional Connectivity (FC) States
 
-This repository contains Python code for calculating 
+This repository contains Python code for calculating fMRI's
 brain's functional connectivity states as identified by clustering model.
 
 Running should be done via `main_FC_states.py` script for dynamical FC, FC dynamics,

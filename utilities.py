@@ -133,8 +133,7 @@ def convert_components(input_path, output_path):
     start = [0]
     dict = {}
     for path in input_path:
-        reduced_components = np.load(path)
-        reduced_components = reduced_components['arr_0']
+        reduced_components = np.load(path)['arr_0']
         samples, timesteps, features = reduced_components.shape
         # new matrix ((time steps x subjects) x number of features(
         # brain areas * n_components))
@@ -143,7 +142,7 @@ def convert_components(input_path, output_path):
         rows, columns = reduced_components_2d.shape
         array[start[input_path.index(path)]: (start[input_path.index(path)]+rows),
         0:features] = reduced_components_2d
-        dict.update({os.path.dirname(path): (start[input_path.index(path)],
+        dict.update({os.path.basename(os.path.dirname(path)): (start[input_path.index(path)],
                                               start[input_path.index(path)]+rows)})
         start.append((rows + start[input_path.index(path)]))
     np.savez(os.path.join(output_path,
@@ -172,8 +171,7 @@ def return_empty_array_rows_columns(input_path, output_path):
     n_rows_list = []
     n_columns_list = []
     for path in input_path:
-        reduced_components = np.load(path)
-        reduced_components = reduced_components['arr_0']
+        reduced_components = np.load(path)['arr_0']
         samples, timesteps, features = reduced_components.shape
         n_rows_list.append((samples * timesteps))
         n_columns_list.append(features)
@@ -194,7 +192,7 @@ def create_new_output_path(input_path, output_path):
     :return: new output path
     :rtype: str
     """
-    base_name = os.path.basename(os.path.dirname(input_path))
+    base_name = os.path.basename(input_path)
     return os.path.join(output_path, base_name)
 
 
@@ -209,3 +207,31 @@ def create_dir(output_path):
         pass
     else:
         os.makedirs(output_path)
+
+
+def separate_concat_array(input_path, starts_json, output_path, n_clusters):
+    """
+    Separate concatenated array with clustered states according to json with its
+    starting points.
+
+    :param input_path: path to the files dir
+    :type input_path: str
+    :param starts_json: path to json with starts
+    :type starts_json: str
+    :param output_path: path where to save the file
+    :type output_path: str
+    :param n_clusters: number of clusters
+    :type n_clusters: int
+    :return: output_paths: list of new output paths
+    :rtype: list
+    """
+    data = np.load(input_path)['arr_0']
+    starts = json.load(open(starts_json))
+    output_paths = []
+    for n in tqdm(range(n_clusters)):
+        new_array = data[starts[starts.items()[n]][1][0]:starts.items()[n][1][1], :]
+        output = os.path.join(output_path, starts.keys()[n],
+                              'splitted_matrix_clusters')
+        output_paths.append(output)
+        np.savez(output, new_array)
+    return output_paths

@@ -187,10 +187,50 @@ def plot_probabilities_barplots(input_path, output_path):
 
     # Draw a nested barplot
     g = sns.factorplot(x='State', y='Probability', hue='Condition',
-                       size=6, kind='bar', palette='muted', data=data)
+                       size=6, kind='bar', palette='PRGn', data=data)
     g.despine(left=True)
     g.set_ylabels('Probability')
     plt.savefig(os.path.join(output_path, 'States probabilities cond.png'))
+    plt.show()
+
+
+def plot_probabilities_boxplots(df, output_path):
+    """
+    Plots the states' probabilities boxplot.
+
+    :param df: probabilities dataframe
+    :type df: pd.Dataframe
+    :param output_path: path to output directory
+    :type output_path: str
+    """
+    sns.set(style="whitegrid")
+
+    # Draw a nested barplot
+    sns.boxplot(x='cluster', y='probability', data=df, hue='condition',
+                palette="PRGn")
+    plt.show()
+    g.set_ylabels('Probability')
+    plt.savefig(os.path.join(output_path, 'States probabilities boxplot.png'))
+    plt.show()
+
+
+def plot_lifetimes_boxplots(df, output_path):
+    """
+    Plots the states' lifetimes boxplot.
+
+    :param df: lifetimes dataframe
+    :type df: pd.DataFrame
+    :param output_path: path to output directory
+    :type output_path: str
+    """
+    sns.set(style="whitegrid")
+
+    # Draw a nested barplot
+    sns.boxplot(x='cluster', y='lifetime', data=df, hue='condition',
+                palette="PRGn")
+    plt.show()
+    g.set_ylabels('Lifetime')
+    plt.savefig(os.path.join(output_path, 'States lifetimes boxplot.png'))
     plt.show()
 
 
@@ -208,10 +248,10 @@ def plot_lifetimes_barplots(input_path, output_path):
 
     # Draw a nested barplot
     g = sns.factorplot(x='State', y='Mean_lifetime', hue='Condition',
-                       size=6, kind='bar', palette='muted', data=data)
+                       size=6, kind='bar', palette='RPGn', data=data)
     g.despine(left=True)
     g.set_ylabels('Mean lifetime of a state (seconds)')
-    plt.savefig(os.path.join(output_path, 'States lifetimes cond.png'))
+    plt.savefig(os.path.join(output_path, 'States lifetimes.png'))
     plt.show()
 
 

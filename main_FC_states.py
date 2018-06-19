@@ -14,6 +14,7 @@ from data_processing_functional_connectivity import \
     preform_lle_on_dynamic_connectivity, preform_pca_on_dynamic_connectivity, \
     functional_connectivity_dynamics
 from modeling_FC_states import kmeans_clustering, kmeans_clustering_mean_score
+from states_features import variance_of_states
 from utilities import convert_components, \
     create_new_output_path, create_dir
 from visualizations import plot_functional_connectivity_matrix, plot_states_line
@@ -58,8 +59,8 @@ def main():
     brain_areas = args.areas
     pca = args.pca
     lle = args.lle
-    t_phases = args.phases
     clusters = args.clusters
+    t_phases = args.phases
 
     create_dir(output_path)
 

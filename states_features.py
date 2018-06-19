@@ -6,6 +6,7 @@ Katerina Capouskova 2018, kcapouskova@hotmail.com
 import json
 import logging
 import os
+import scipy
 
 import numpy as np
 from scipy.stats import stats
@@ -117,6 +118,27 @@ def students_t_test(group_a, group_b, output_path):
     return t, p
 
 
+def p_value_stars(p_value):
+    """
+    Returns the appropriate number of stars for the p_value
+
+    :param p_value: p_value
+    :type p_value: int
+    :param output_path: path to output directory
+    :type output_path: str
+    """
+    if p_value < 0.0001:
+        return "****"
+    elif (p_value < 0.001):
+        return "***"
+    elif (p_value < 0.01):
+        return "**"
+    elif (p_value < 0.05):
+        return "*"
+    else:
+        return "-"
+
+
 def distribution_probability_lifetime(clusters, output_path, n_clusters):
     """
     Creates a distribution of probabilities and life times of states
@@ -151,9 +173,31 @@ def variance_of_states(reduced_components, output_path):
     :type reduced_components: np.ndarray
     :param output_path: path to output directory
     :type output_path: str
-    :return: variance:array of variances
+    :return: variance: array of variances
     :rtype: np.ndarray
     """
     variance = np.var(reduced_components, axis=1)
     np.savez(os.path.join(output_path, 'variance'), variance)
     return variance
+
+
+def entropy_of_states(probabilities, output_path, n_clusters):
+    """
+    Computes the entropy of probabilities of states
+
+    :param probabilities: array with states probabilities
+    :type probabilities: np.ndarray
+    :param output_path: path to output directory
+    :type output_path: str
+    :param n_clusters: number of clusters
+    :type: n_clusters: int
+    :return: entropy: calculated entropy
+    :rtype: int
+    """
+    logging.basicConfig(
+        filename=os.path.join(output_path, 'entropy_n_clusters_{}.log'.format(
+            n_clusters)),
+        level=logging.INFO)
+    entropy = scipy.stats.entropy(probabilities)
+    logging.info('State {} entropy is {}'.format(n_clusters, entropy))
+    return entropy

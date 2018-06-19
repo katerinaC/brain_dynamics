@@ -114,6 +114,8 @@ def kmeans_clustering_mean_score(reduced_components, output_path, n_clusters):
                              sample_silhouette_values, clusters_array, cluster_center)
     clusters_array = np.expand_dims(clusters_array, axis=1)
     data_clusters = np.hstack((reduced_components, clusters_array))
+    np.savez(os.path.join(output_path, 'concatentated_matrix_clusters'),
+             data_clusters)
     return clusters_array, data_clusters
 
 
