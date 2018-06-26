@@ -16,10 +16,10 @@ import pandas as pd
 from tqdm import tqdm
 
 from states_features import distribution_probability_lifetime, \
-    variance_of_states, entropy_of_states, students_t_test, p_value_stars
+    variance_of_states, entropy_of_states, students_t_test
 from utilities import create_dir, separate_concat_array
-from visualizations import plot_variance, plot_probabilities_boxplots, \
-    plot_lifetimes_boxplots
+from visualizations import plot_variance, plot_probabilities_barplots, \
+    plot_lifetimes_barplots
 
 
 def parse_args():
@@ -29,11 +29,8 @@ def parse_args():
 
     parser = argparse.ArgumentParser('Run FC states features.')
 
-    parser.add_argument('--input', type='str', help='Path to the concatenated '
+    parser.add_argument('--input', type=str, help='Path to the concatenated '
                                                     'matrix with clusters',
-                        required=True)
-    parser.add_argument('--cluster_m', type=str,
-                        help='Path to only clusters matrix.',
                         required=True)
     parser.add_argument('--output', type=str,
                         help='Path to output folder', required=True)
@@ -45,8 +42,8 @@ def parse_args():
     parser.add_argument('--separate', action='store_true', default=False,
                         help='Separate tasks from in the concatenated matrix',
                         required=False)
-    parser.add_argument('--clusters', type=int, default=None,
-                        help='Number of clusters', required=False)
+    parser.add_argument('--clusters', type=str,
+                        help='Path to clusters file clustered_matrix', required=True)
     return parser.parse_args()
 
 
@@ -74,7 +71,8 @@ def main():
         new_paths = separate_concat_array(input_path, starts_json, output_path,
                                           n_clusters)
         for path in tqdm(new_paths):
-            output_p = os.path.join(output_path, os.path.basename(path))
+            output_p = os.path.join(output_path,
+                                    os.path.basename(os.path.dirname(path)))
             create_dir(output_p)
             matrix = np.load(path)['arr_0']
             clusters = matrix[:, -1]
@@ -87,8 +85,8 @@ def main():
         for a, b in itertools.combinations(new_paths, 2):
             group_a = np.load(a)['arr_0'][:, -1]
             group_b = np.load(b)['arr_0'][:, -1]
-            a_name = os.path.basename(a)
-            b_name = os.path.basename(b)
+            a_name = os.path.basename(os.path.dirname(a))
+            b_name = os.path.basename(os.path.dirname(b))
             output = os.path.join(output_path, a_name + '_' + b_name)
             create_dir(output)
             probas_a, lifetimes_a = distribution_probability_lifetime(group_a,
@@ -104,17 +102,17 @@ def main():
                          'condition': cond_a + cond_b,
                          'cluster': group_a.tolist() + group_b.tolist()}
             df = pd.DataFrame(data=dict_prob)
-            plot_probabilities_boxplots(df, output)
-            plot_lifetimes_boxplots(df, output)
-            for c in tqdm(n_clusters):
+            plot_probabilities_barplots(df, output)
+            plot_lifetimes_barplots(df, output)
+            for c in tqdm(range(n_clusters)):
                 df_n = df[df['cluster'] == c]
                 con_a = df_n[df_n['condition'] == a_name]
                 con_b = df_n[df_n['condition'] == b_name]
                 t_prob, p_prob = students_t_test(con_a['probability'], con_b['probability'],
-                                                 os.path.join(output, c, 'probability'))
+                                                 os.path.join(output, str(c), 'probability'))
                 t_lt, p_lt = students_t_test(con_a['lifetime'],
                                              con_b['lifetime'],
-                                             os.path.join(output, c, 'lifetime'))
+                                             os.path.join(output, str(c), 'lifetime'))
 
 
 if __name__ == '__main__':

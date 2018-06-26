@@ -173,21 +173,20 @@ def plot_variance(labels, variance, output_path):
     # plt.show()
 
 
-def plot_probabilities_barplots(input_path, output_path):
+def plot_probabilities_barplots(df, output_path):
     """
     Plots the states' probabilities histogram.
 
-    :param input_path: path to input
-    :type input_path: str
+    :param df: probabilities dataframe
+    :type df: pd.Dataframe
     :param output_path: path to output directory
     :type output_path: str
     """
-    data = pd.read_csv(input_path, delimiter=';')
     sns.set(style="whitegrid")
 
     # Draw a nested barplot
-    g = sns.factorplot(x='State', y='Probability', hue='Condition',
-                       size=6, kind='bar', palette='PRGn', data=data)
+    g = sns.factorplot(x='cluster', y='probability', hue='condition',
+                       size=6, kind='bar', palette='PRGn', data=df)
     g.despine(left=True)
     g.set_ylabels('Probability')
     plt.savefig(os.path.join(output_path, 'States probabilities cond.png'))
@@ -208,7 +207,7 @@ def plot_probabilities_boxplots(df, output_path):
     # Draw a nested barplot
     g = sns.boxplot(x='cluster', y='probability', data=df, hue='condition',
                 palette="PRGn")
-    g.set_ylabels('Probability')
+    plt.ylabel('Probability')
     plt.savefig(os.path.join(output_path, 'States probabilities boxplot.png'))
     # plt.show()
 
@@ -227,26 +226,25 @@ def plot_lifetimes_boxplots(df, output_path):
     # Draw a nested barplot
     g = sns.boxplot(x='cluster', y='lifetime', data=df, hue='condition',
                 palette="PRGn")
-    g.set_ylabels('Lifetime')
+    plt.ylabel('Lifetime')
     plt.savefig(os.path.join(output_path, 'States lifetimes boxplot.png'))
     # plt.show()
 
 
-def plot_lifetimes_barplots(input_path, output_path):
+def plot_lifetimes_barplots(df, output_path):
     """
     Plots the states' lifetimes histogram.
 
-    :param input_path: path to input
-    :type input_path: str
+    :param df: lifetimes dataframe
+    :type df: pd.DataFrame
     :param output_path: path to output directory
     :type output_path: str
     """
-    data = pd.read_csv(input_path, delimiter=';')
     sns.set(style="whitegrid")
 
     # Draw a nested barplot
-    g = sns.factorplot(x='State', y='Mean_lifetime', hue='Condition',
-                       size=6, kind='bar', palette='RPGn', data=data)
+    g = sns.factorplot(x='cluster', y='lifetime', hue='condition',
+                       size=6, kind='bar', palette='PRGn', data=df)
     g.despine(left=True)
     g.set_ylabels('Mean lifetime of a state (seconds)')
     plt.savefig(os.path.join(output_path, 'States lifetimes.png'))

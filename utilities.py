@@ -214,7 +214,7 @@ def separate_concat_array(input_path, starts_json, output_path, n_clusters):
     Separate concatenated array with clustered states according to json with its
     starting points.
 
-    :param input_path: path to the files dir
+    :param input_path: path to the concatenated array
     :type input_path: str
     :param starts_json: path to json with starts
     :type starts_json: str
@@ -228,10 +228,11 @@ def separate_concat_array(input_path, starts_json, output_path, n_clusters):
     data = np.load(input_path)['arr_0']
     starts = json.load(open(starts_json))
     output_paths = []
-    for n in tqdm(range(n_clusters)):
-        new_array = data[starts[starts.items()[n]][1][0]:starts.items()[n][1][1], :]
+    for n in tqdm(range(len(starts))):
+        new_array = data[starts.items()[n][1][0]:starts.items()[n][1][1], :]
         output = os.path.join(output_path, starts.keys()[n],
-                              'splitted_matrix_clusters')
+                              'splitted_matrix_clusters.npz')
         output_paths.append(output)
+        create_dir(os.path.join(output_path, starts.keys()[n]))
         np.savez(output, new_array)
     return output_paths

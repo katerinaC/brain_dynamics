@@ -11,6 +11,8 @@ import scipy
 import numpy as np
 from scipy.stats import stats
 
+from utilities import create_dir
+
 
 def probability_of_state(clusters, n_clusters, output_path):
     """
@@ -110,11 +112,15 @@ def students_t_test(group_a, group_b, output_path):
     :param output_path: path to output directory
     :type output_path: str
     """
+    create_dir(output_path)
     logging.basicConfig(
         filename=os.path.join(output_path, 'students_t_test.log'),
         level=logging.INFO)
     t, p = stats.ttest_ind(group_a, group_b, equal_var=False)
     logging.info('T-test value: {}, p-value: {}'.format(t, p))
+    dict = {'T-test value': t, 'p-value': p}
+    with open(os.path.join(output_path, 'students_t_test.json'), 'w') as fp:
+        json.dump(dict, fp)
     return t, p
 
 
@@ -200,4 +206,8 @@ def entropy_of_states(probabilities, output_path, n_clusters):
         level=logging.INFO)
     entropy = scipy.stats.entropy(probabilities)
     logging.info('State {} entropy is {}'.format(n_clusters, entropy))
+    dict = {'State': n_clusters, 'entropy': entropy}
+    with open(os.path.join(output_path, 'entropy.json'), 'w') as fp:
+        json.dump(dict, fp)
     return entropy
+
