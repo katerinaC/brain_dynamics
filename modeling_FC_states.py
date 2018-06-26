@@ -88,7 +88,7 @@ def kmeans_clustering_mean_score(reduced_components, output_path, n_clusters):
                                               'clustering_FC_states_mean_score.log'),
                         level=logging.INFO)
     results = []
-    for iter in tqdm(range(10)):
+    for iter in tqdm(range(1)):
         kmeans = KMeans(n_clusters=n_clusters).fit(reduced_components)
         # perform the silhouette analysis as a metric for the clustering model
         silhouette = silhouette_score(reduced_components, kmeans.labels_,

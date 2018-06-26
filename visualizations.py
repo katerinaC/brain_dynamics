@@ -32,7 +32,7 @@ def plot_functional_connectivity_matrix(fcd_matrix, output_path):
     heat_map.set_xticklabels(heat_map.get_xticklabels(), rotation=90, fontsize=4)
 
     plt.savefig(os.path.join(output_path, 'FCD_matrix_heatmap.png'))
-    plt.show()
+    # plt.show()
 
 
 def plot_dfc_areas_correlation(instant_connectivity, output_path):
@@ -62,7 +62,7 @@ def plot_dfc_areas_correlation(instant_connectivity, output_path):
     heat_map.set_xticklabels(heat_map.get_xticklabels(), rotation=90, fontsize=4)
 
     plt.savefig(os.path.join(output_path, 'Area_correlation_heatmap.png'))
-    plt.show()
+    # plt.show()
 
 
 def plot_hidden_states(hidden_states, n_components, markov_array, output_path):
@@ -116,7 +116,7 @@ def plot_hidden_states(hidden_states, n_components, markov_array, output_path):
     fg.fig.suptitle('Different brain states according to HMM', fontsize=24,
                     fontweight='demi')
     fg.savefig(os.path.join(output_path, 'Hidden Markov Model States.png'))
-    sns.plt.show()
+    # sns.plt.show()
 
 
 def dash_plot_timeseries(instant_connectivity, output_path):
@@ -132,7 +132,7 @@ def dash_plot_timeseries(instant_connectivity, output_path):
     df = pd.DataFrame(array)
     df.plot()
     plt.savefig(os.path.join(output_path, 'timeseries_plot.png'))
-    plt.show()
+    # plt.show()
 
 
 def plot_states_line(cluster_states, t_phases, output_path):
@@ -151,7 +151,7 @@ def plot_states_line(cluster_states, t_phases, output_path):
     ax = plt.axes()
     ax.plot(cluster_states[0:t_phases], '-y')
     plt.savefig(os.path.join(output_path, 'clustered_states_plot.png'))
-    plt.show()
+    # plt.show()
 
 
 def plot_variance(labels, variance, output_path):
@@ -170,7 +170,7 @@ def plot_variance(labels, variance, output_path):
     plt.xlabel('States')
     plt.ylabel('Variance')
     plt.savefig(os.path.join(output_path, 'States variance.png'))
-    plt.show()
+    # plt.show()
 
 
 def plot_probabilities_barplots(input_path, output_path):
@@ -191,7 +191,7 @@ def plot_probabilities_barplots(input_path, output_path):
     g.despine(left=True)
     g.set_ylabels('Probability')
     plt.savefig(os.path.join(output_path, 'States probabilities cond.png'))
-    plt.show()
+    # plt.show()
 
 
 def plot_probabilities_boxplots(df, output_path):
@@ -206,12 +206,11 @@ def plot_probabilities_boxplots(df, output_path):
     sns.set(style="whitegrid")
 
     # Draw a nested barplot
-    sns.boxplot(x='cluster', y='probability', data=df, hue='condition',
+    g = sns.boxplot(x='cluster', y='probability', data=df, hue='condition',
                 palette="PRGn")
-    plt.show()
     g.set_ylabels('Probability')
     plt.savefig(os.path.join(output_path, 'States probabilities boxplot.png'))
-    plt.show()
+    # plt.show()
 
 
 def plot_lifetimes_boxplots(df, output_path):
@@ -226,12 +225,11 @@ def plot_lifetimes_boxplots(df, output_path):
     sns.set(style="whitegrid")
 
     # Draw a nested barplot
-    sns.boxplot(x='cluster', y='lifetime', data=df, hue='condition',
+    g = sns.boxplot(x='cluster', y='lifetime', data=df, hue='condition',
                 palette="PRGn")
-    plt.show()
     g.set_ylabels('Lifetime')
     plt.savefig(os.path.join(output_path, 'States lifetimes boxplot.png'))
-    plt.show()
+    # plt.show()
 
 
 def plot_lifetimes_barplots(input_path, output_path):
@@ -252,7 +250,7 @@ def plot_lifetimes_barplots(input_path, output_path):
     g.despine(left=True)
     g.set_ylabels('Mean lifetime of a state (seconds)')
     plt.savefig(os.path.join(output_path, 'States lifetimes.png'))
-    plt.show()
+    # plt.show()
 
 
 def plot_silhouette_analysis(X, output_path, n_clusters, silhouette_avg,
@@ -296,7 +294,8 @@ def plot_silhouette_analysis(X, output_path, n_clusters, silhouette_avg,
         y_upper = y_lower + size_cluster_i
 
         color = ['darkorange', 'mediumslateblue', 'mediumaquamarine', 'orchid',
-                 'steelblue', 'lightgreen', 'lightslategrey', 'darksalmon']
+                 'steelblue', 'lightgreen', 'lightslategrey', 'darksalmon',
+                 'tomato', 'turquoise']
         ax1.fill_betweenx(np.arange(y_lower, y_upper),
                           0, ith_cluster_silhouette_values,
                           facecolor=color[i], edgecolor=color[i], alpha=0.7)
@@ -337,4 +336,4 @@ def plot_silhouette_analysis(X, output_path, n_clusters, silhouette_avg,
                   "with n_clusters = %d" % n_clusters),
                  fontsize=14, fontweight='bold')
     plt.savefig(os.path.join(output_path, 'Clustering_{}.png'.format(n_clusters)))
-    plt.show()
+    # plt.show()

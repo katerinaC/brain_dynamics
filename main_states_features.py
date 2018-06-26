@@ -113,8 +113,8 @@ def main():
                 t_prob, p_prob = students_t_test(con_a['probability'], con_b['probability'],
                                                  os.path.join(output, c, 'probability'))
                 t_lt, p_lt = students_t_test(con_a['lifetime'],
-                                                 con_b['lifetime'],
-                                                 os.path.join(output, c, 'lifetime'))
+                                             con_b['lifetime'],
+                                             os.path.join(output, c, 'lifetime'))
 
 
 if __name__ == '__main__':
