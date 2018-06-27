@@ -16,12 +16,12 @@ probabilities of states and it estimate the p-value between two conditions.
 To run a main script, open your command line, navigate to the directory and run
 it according to the arguments.
 
-####Example for FC states:
+#### Example for FC states:
 
 `python main_FC_states.py --input users/name/data/task1 users/name/data/task2
 --output users/name/data/tasks_output --areas 66 --pca --clusters 4`
 
-####Example for states features:
+#### Example for states features:
 
 `python main_states_features.py --input users/name/data/concatendated_clusters.npz
 --output users/name/data/tasks_output/states --n_clusters 4
