@@ -69,6 +69,8 @@ def main():
     entropy_of_states(probabilities, output_path, n_clusters)
 
     if separate:
+        probas_p_values = []
+        lifetimes_p_values = []
         new_paths = separate_concat_array(input_path, starts_json, output_path,
                                           n_clusters)
         for path in tqdm(new_paths):
@@ -121,6 +123,11 @@ def main():
                 t_lt, p_lt = students_t_test(con_a['lifetime'],
                                              con_b['lifetime'],
                                              os.path.join(output, str(c), 'lifetime'))
+                probas_p_values.append(p_prob)
+                lifetimes_p_values.append(p_lt)
+        p_values = pd.DataFrame({'probabilities_p': probas_p_values,
+                                 'lifetimes_p': lifetimes_p_values})
+        p_values.to_csv(os.path.join(output_path, 'p_values_{}.csv'.format(n_clusters)))
 
 
 if __name__ == '__main__':
