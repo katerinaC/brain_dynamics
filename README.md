@@ -23,10 +23,10 @@ it according to the arguments.
 
 #### Example for states features:
 
-`python main_states_features.py --input users/name/data/concatendated_clusters.npz
+`python main_states_features.py --input users/name/data/concatenated_clusters.npz
 --output users/name/data/tasks_output/states --n_clusters 4
 --starts users/name/data/tasks_output/starts.json --separate
---clusetrs users/name/data/tasks_output/clusters.npz`
+--clusters users/name/data/tasks_output/clusters.npz`
 
 ### Data format
 
@@ -39,7 +39,7 @@ Two parameters are in the code as they are usually the same, however, check for
 for number of components in dim. reduction and TR in mean
 lifetime of states (default 2 for both).
 
-Also, if running for different datasets, check the number of brain areas. Ideally,
+Also, if running for different data sets, check the number of brain areas. Ideally,
 the number of brain areas and the brain areas themselves should correspond.
 
 

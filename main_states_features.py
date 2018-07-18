@@ -16,7 +16,8 @@ import pandas as pd
 from tqdm import tqdm
 
 from states_features import distribution_probability_lifetime, \
-    variance_of_states, entropy_of_states, students_t_test
+    variance_of_states, entropy_of_states, students_t_test, \
+    mean_lifetime_of_state, probability_of_state
 from utilities import create_dir, separate_concat_array
 from visualizations import plot_variance, plot_probabilities_barplots, \
     plot_lifetimes_barplots
@@ -89,19 +90,26 @@ def main():
             b_name = os.path.basename(os.path.dirname(b))
             output = os.path.join(output_path, a_name + '_' + b_name)
             create_dir(output)
-            probas_a, lifetimes_a = distribution_probability_lifetime(group_a,
-                                                                      output,
-                                                                      n_clusters)
-            probas_b, lifetimes_b = distribution_probability_lifetime(group_b,
-                                                                      output,
-                                                                      n_clusters)
+            proba_a = probability_of_state(group_a, n_clusters, output)
+            proba_a = {int(k): v for k,v in proba_a.items()}
+            proba_b = probability_of_state(group_b, n_clusters, output)
+            proba_b = {int(k): v for k, v in proba_b.items()}
+            lt_a = mean_lifetime_of_state(group_a, n_clusters, output)
+            lt_a = {int(k): v for k, v in lt_a.items()}
+            lt_b = mean_lifetime_of_state(group_b, n_clusters, output)
+            lt_b = {int(k): v for k, v in lt_b.items()}
+            probas_a = [proba_a[i] for i in group_a]
+            probas_b = [proba_b[y] for y in group_b]
+            lts_a = [lt_a[m] for m in group_a]
+            lts_b = [lt_b[n] for n in group_b]
             cond_a = [a_name for i in range(len(group_a))]
             cond_b = [b_name for z in range(len(group_b))]
-            dict_prob = {'probability': probas_a.tolist() + probas_b.tolist(),
-                         'lifetime': lifetimes_a.tolist() + lifetimes_b.tolist(),
+            dict_prob = {'probability': probas_a + probas_b,
+                         'lifetime': lts_a + lts_b,
                          'condition': cond_a + cond_b,
                          'cluster': group_a.tolist() + group_b.tolist()}
             df = pd.DataFrame(data=dict_prob)
+            df.to_csv(os.path.join(output, 'probas_lt_dataframe.csv'))
             plot_probabilities_barplots(df, output)
             plot_lifetimes_barplots(df, output)
             for c in tqdm(range(n_clusters)):
