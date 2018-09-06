@@ -115,7 +115,7 @@ def transform_mat_data(input_path, output_path, n_subjects):
 
 def convert_components(input_path, output_path):
     """
-    Loads PCA/LLE arrays for all condiitons and converts them to a clustering
+    Loads PCA/LLE arrays for all conditions and converts them to a clustering
     format.
 
     :param input_path: path to the files dir

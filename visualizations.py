@@ -35,22 +35,16 @@ def plot_functional_connectivity_matrix(fcd_matrix, output_path):
     # plt.show()
 
 
-def plot_dfc_areas_correlation(instant_connectivity, output_path):
+def plot_dfc_areas_correlation(connectivity, output_path):
     """
     Plots brain areas correlations of one subject at one time point (NxN).
 
-    :param instant_connectivity: array representing PCA or LLE matrix
-    :type instant_connectivity: np.ndarray
+    :param connectivity: array representing dynamical functional conn.
+    :type connectivity: np.ndarray
     :param output_path: path to output directory
     :type output_path: str
     """
-    brain_areas = instant_connectivity.shape[2]
-    iFC = np.full((brain_areas, brain_areas), fill_value=0).astype(np.float64)
-    for i in range(0, brain_areas):
-        for z in range(0, brain_areas):
-            iFC[i, z] = instant_connectivity[1, 3, z]
-            print instant_connectivity[1, 3, z]
-    df = pd.DataFrame(data=iFC)
+    df = pd.DataFrame(data=connectivity)
     corr = df.corr()
     fig, ax = plt.subplots(1)
     #cmap = sns.diverging_palette(250, 15, as_cmap=True, center="dark")
@@ -61,7 +55,7 @@ def plot_dfc_areas_correlation(instant_connectivity, output_path):
     heat_map.set_yticklabels(heat_map.get_yticklabels(), rotation=0, fontsize=4)
     heat_map.set_xticklabels(heat_map.get_xticklabels(), rotation=90, fontsize=4)
 
-    plt.savefig(os.path.join(output_path, 'Area_correlation_heatmap.png'))
+    plt.savefig(os.path.join(output_path, 'Area_correlation_heatmap_averaged.png'))
     # plt.show()
 
 

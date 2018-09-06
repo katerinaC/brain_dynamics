@@ -19,7 +19,7 @@ from sklearn import manifold
 from sklearn.decomposition import PCA
 from tqdm import tqdm
 
-from utilities import return_paths_list
+from utilities import return_paths_list, create_dir
 
 
 def convert_to_phases(input_path, output_path, brain_areas, t_phases, subject):
@@ -84,6 +84,9 @@ def preform_pca_on_dynamic_connectivity(input_path, output_path, brain_areas,
                     else:
                         dFC[i, z] = np.cos(np.absolute(phases[i, t] -
                                                        phases[z, t]))
+            dfc_output = os.path.join(output_path, 'dFC')
+            create_dir(dfc_output)
+            np.savez(os.path.join(dfc_output, 'subject_{}_time_{}'.format(n, t)), dFC)
             pca = PCA(n_components=2)
             pca.fit(dFC)
             pca_dict = {
@@ -100,7 +103,7 @@ def preform_pca_on_dynamic_connectivity(input_path, output_path, brain_areas,
                 json.dump(pca_dict, output)
             pca_components[n, t, :] = \
                 pca_dict['components'][0] + pca_dict['components'][1]
-    # save the PCA matrix into a .csv file
+    # save the PCA matrix into a .npz file
     np.savez(os.path.join(output_path, 'components_matrix'), pca_components)
     return pca_components, pca_components.shape
 

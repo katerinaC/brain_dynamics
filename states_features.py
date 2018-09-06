@@ -116,7 +116,7 @@ def students_t_test(group_a, group_b, output_path):
     logging.basicConfig(
         filename=os.path.join(output_path, 'students_t_test.log'),
         level=logging.INFO)
-    t, p = stats.ttest_ind(group_a, group_b, equal_var=False)
+    t, p = stats.ttest_ind(group_a, group_b)
     logging.info('T-test value: {}, p-value: {}'.format(t, p))
     dict = {'T-test value': t, 'p-value': p}
     with open(os.path.join(output_path, 'students_t_test.json'), 'w') as fp:
