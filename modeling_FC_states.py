@@ -16,7 +16,7 @@ import logging
 import numpy as np
 from hmmlearn import hmm
 from pomegranate import *
-from sklearn.cluster import KMeans
+from sklearn.cluster import KMeans, DBSCAN
 from sklearn.metrics import silhouette_score, silhouette_samples
 from tqdm import tqdm
 
@@ -263,3 +263,42 @@ def kmeans_clustering_missing(reduced_components, output_path,
                                                      cls.inertia_))
     np.savez(os.path.join(output_path, 'clustered_matrix'), labels)
     return labels, centroids, X_filled
+
+
+def dbscan(reduced_components, output_path):
+    """
+    Performs a K-means clustering with pre-set number of clusters more times and
+    returns the average silhouette score
+
+    :param reduced_components: reduced components matrix
+    :type reduced_components: np.ndarray
+    :param output_path: path to output directory
+    :type output_path: str
+    :return: clustered array, features array with labels
+    :rtype: np.ndarray, np.ndarray
+    """
+    logging.basicConfig(filename=os.path.join(output_path,
+                                              'clustering_FC_states_mean_score.log'),
+                        level=logging.INFO)
+
+    dbscan, labels = DBSCAN(eps=0.3, min_samples=10).fit_predict(reduced_components)
+    # perform the silhouette analysis as a metric for the clustering model
+    silhouette = silhouette_score(reduced_components, labels,
+                                  sample_size=500)
+    # Number of clusters in labels, ignoring noise if present.
+    n_clusters = len(set(labels)) - (1 if -1 in labels else 0)
+    logging.info('For n clusters = {}, the silhouette score is: {}'
+                 .format(n_clusters, silhouette))
+    core_samples = dbscan.core_sample_indices_
+    logging.info('Indices of core samples'.format(core_samples))
+    sample_silhouette_values = silhouette_samples(reduced_components, labels)
+    np.savez(os.path.join(output_path, 'clustered_matrix'), labels)
+    probability_of_state(labels, n_clusters, output_path)
+    mean_lifetime_of_state(labels, n_clusters, output_path)
+    plot_silhouette_analysis(reduced_components, output_path, n_clusters, silhouette,
+                             sample_silhouette_values, labels, dbscan.components_)
+    clusters_array = np.expand_dims(labels, axis=1)
+    data_clusters = np.hstack((reduced_components, clusters_array))
+    np.savez(os.path.join(output_path, 'concatentated_matrix_clusters'),
+             data_clusters)
+    return labels, data_clusters

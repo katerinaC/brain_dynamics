@@ -13,8 +13,8 @@ import os
 from data_processing_functional_connectivity import \
     preform_lle_on_dynamic_connectivity, preform_pca_on_dynamic_connectivity, \
     functional_connectivity_dynamics
-from modeling_FC_states import kmeans_clustering, kmeans_clustering_mean_score
-from states_features import variance_of_states
+from modeling_FC_states import kmeans_clustering, kmeans_clustering_mean_score, \
+    dbscan
 from utilities import convert_components, \
     create_new_output_path, create_dir
 from visualizations import plot_functional_connectivity_matrix, plot_states_line
@@ -45,6 +45,9 @@ def parse_args():
                              'reduction', required=False)
     parser.add_argument('--clusters', type=int, default=None,
                         help='Number of clusters', required=False)
+    parser.add_argument('--db', action='store_true', default=False,
+                        help='Perform DBSCAN clustering algorithm',
+                        required=False)
     return parser.parse_args()
 
 
@@ -61,6 +64,7 @@ def main():
     lle = args.lle
     clusters = args.clusters
     t_phases = args.phases
+    db = args.db
 
     create_dir(output_path)
 
@@ -89,6 +93,10 @@ def main():
         concatenated = convert_components(output_paths, output_path)
         kmeans_clustering_mean_score(concatenated, output_path,
                                      clusters)
+    elif db:
+        concatenated = convert_components(output_paths, output_path)
+        dbscan(concatenated, output_path)
+
     else:
         # perform clustering on data separately
         clusters = kmeans_clustering(components, output_path)
