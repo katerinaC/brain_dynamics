@@ -8,5 +8,5 @@ hmmlearn
 seaborn==0.7.1
 nitime>=0.7
 pomegranate
-
-
+Keras==2.2.2
+tensorflow==1.10.1

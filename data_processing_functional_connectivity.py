@@ -12,10 +12,9 @@ import json
 import os
 
 import numpy as np
-import pandas as pd
 import pylab
 from scipy import signal
-from sklearn import manifold
+from sklearn import manifold, preprocessing
 from sklearn.decomposition import PCA
 from tqdm import tqdm
 
@@ -47,6 +46,46 @@ def convert_to_phases(input_path, output_path, brain_areas, t_phases, subject):
         phases[area, :] = np.angle(signal.hilbert(time_series))
     np.savez(os.path.join(output_path, 'phases_{}'.format(subject)), phases)
     return phases
+
+
+def dynamic_functional_connectivity(input_path, output_path, brain_areas,
+                                    pattern):
+    """
+    Computes the dynamic functional connectivity of brain areas.
+
+    :param input_path: path to input dir
+    :type input_path: str
+    :param output_path: path to output directory
+    :type output_path: str
+    :param brain_areas: number of brain areas
+    :type brain_areas: int
+    :param pattern: pattern of input files
+    :type pattern: str
+    :return: dFC output path
+    :rtype: str
+    """
+    paths = return_paths_list(input_path, output_path, pattern=pattern)
+    n_subjects = len(paths)
+    array = np.genfromtxt(paths[0], delimiter=',')
+    t_phases = array.shape[0]
+    dFC = np.full((brain_areas, brain_areas), fill_value=0).astype(np.float64)
+
+    for n in tqdm(range(n_subjects)):
+        phases = convert_to_phases(paths[n], output_path, brain_areas, t_phases, n)
+        for t in range(0, t_phases):
+            for i in range(0, brain_areas):
+                for z in range(0, brain_areas):
+                    if np.absolute(phases[i, t] - phases[z, t]) > np.pi:
+                        dFC[i, z] = np.cos(2 * np.pi - np.absolute(
+                            phases[i, t] - phases[z, t]))
+                    else:
+                        dFC[i, z] = np.cos(np.absolute(phases[i, t] -
+                                                       phases[z, t]))
+            dfc_output = os.path.join(output_path, 'dFC')
+            create_dir(dfc_output)
+            np.savez(os.path.join(dfc_output, 'subject_{}_time_{}'.format(n, t)), dFC)
+
+    return dfc_output
 
 
 def preform_pca_on_dynamic_connectivity(input_path, output_path, brain_areas,
@@ -88,12 +127,14 @@ def preform_pca_on_dynamic_connectivity(input_path, output_path, brain_areas,
             create_dir(dfc_output)
             np.savez(os.path.join(dfc_output, 'subject_{}_time_{}'.format(n, t)), dFC)
             pca = PCA(n_components=2)
+            # normalize
+            dFC = preprocessing.normalize(dFC, norm='l2')
             pca.fit(dFC)
             pca_dict = {
                 'components': pca.components_.tolist(),
                 'explained variance': pca.explained_variance_.tolist(),
-                'explained variance ratio': pca.
-                explained_variance_ratio_.tolist(),
+                'explained mean variance': np.mean(pca.explained_variance_.tolist()),
+                'explained variance ratio': pca.explained_variance_ratio_.tolist(),
                 'mean': pca.mean_.tolist(),
                 'n components': pca.n_components_,
                 'noise variance': pca.noise_variance_.tolist()
@@ -127,14 +168,13 @@ def preform_lle_on_dynamic_connectivity(input_path, output_path, brain_areas,
     """
     paths = return_paths_list(input_path, output_path, pattern=pattern)
     n_subjects = len(paths)
-    df = pd.read_csv(paths[0])
-    t_phases = df.shape[0]
+    array = np.genfromtxt(paths[0], delimiter=',')
+    t_phases = array.shape[0]
     dFC = np.full((brain_areas, brain_areas), fill_value=0).astype(np.float64)
     lle_components = np.full((n_subjects, t_phases, (brain_areas * 2)),
                              fill_value=0).astype(np.float64)
     for n in tqdm(range(0, n_subjects)):
-        phases = convert_to_phases(paths[n], output_path, brain_areas, t_phases,
-                                   n)
+        phases = convert_to_phases(paths[n], output_path, brain_areas, t_phases, n)
         for t in range(0, t_phases):
             for i in range(0, brain_areas):
                 for z in range(0, brain_areas):
@@ -144,6 +184,10 @@ def preform_lle_on_dynamic_connectivity(input_path, output_path, brain_areas,
                     else:
                         dFC[i, z] = np.cos(np.absolute(phases[i, t] -
                                                        phases[z, t]))
+            dfc_output = os.path.join(output_path, 'dFC')
+            create_dir(dfc_output)
+            np.savez(os.path.join(dfc_output, 'subject_{}_time_{}'.format(n, t)),
+                dFC)
             lle, err = manifold.locally_linear_embedding(dFC, n_neighbors=12,
                                                          n_components=2)
             with open(os.path.join(output_path, 'LLE_error_{}_{}'.format(n, t)),

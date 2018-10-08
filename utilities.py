@@ -36,7 +36,8 @@ def load_mat_save_as_csv(input_path, output_path):
 
 def return_paths_list(input_path, output_path, pattern):
     """
-    Loads the .mat file and saves it as a .csv file or files.
+    Loads the .mat file and saves it as a .csv file or files. Returns all
+    paths in a directory with specific format as a list.
 
     :param input_path: path to the files directory
     :type input_path: str
@@ -236,3 +237,31 @@ def separate_concat_array(input_path, starts_json, output_path, n_clusters):
         create_dir(os.path.join(output_path, starts.keys()[n]))
         np.savez(output, new_array)
     return output_paths
+
+
+def preprocess_autoencoder(input_paths, output_path, brain_areas):
+    """
+    Preprocesses data for autoencoder. Takes all dynamic functional connectivity
+    matrices and concatenates them together.
+
+    :param input_paths: paths to input directories
+    :type input_paths: []
+    :param output_path: path to output directory
+    :type output_path: str
+    :param brain_areas: number of brain areas
+    :type brain_areas: int
+    :return: array with all dfc matrices, number of samples
+    :rtype: np.ndarray, int
+    """
+    all_paths = []
+    for path in tqdm(input_paths):
+        all_subjects_paths = return_paths_list(path, output_path, '.npz')
+        all_paths.extend(all_subjects_paths)
+    n_samples = len(all_paths)
+    dfc_all = np.full((n_samples, brain_areas, brain_areas),
+                      fill_value=0).astype(np.float64)
+    for p in tqdm(all_paths):
+        dfc = np.load(p)['arr_0']
+        dfc_all[all_paths.index(p), :, :] = dfc
+    np.savez(os.path.join(output_path, 'dfc_all'), dfc_all)
+    return dfc_all, n_samples

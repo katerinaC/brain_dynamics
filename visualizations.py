@@ -329,3 +329,33 @@ def plot_silhouette_analysis(X, output_path, n_clusters, silhouette_avg,
                  fontsize=14, fontweight='bold')
     plt.savefig(os.path.join(output_path, 'Clustering_{}.png'.format(n_clusters)))
     # plt.show()
+
+
+def plot_autoe_vs_pca(pca_a, enc_a, output_path):
+    """
+    Plots the PCA vs autoencoder dimensionality reduction.
+
+    :param pca_a: PCA output array
+    :type pca_a: np.ndarray
+    :param enc_a: autoencoder output array
+    :type enc_a: np.ndarray
+    :param output_path: path to output directory
+    :type output_path: str
+    """
+    plt.figure(figsize=(8, 4))
+    plt.subplot(121)
+    plt.title('PCA')
+    plt.scatter(pca_a[:5000, 0], pca_a[:5000, 1], s=8,
+                cmap='tab10')
+    plt.gca().get_xaxis().set_ticklabels([])
+    plt.gca().get_yaxis().set_ticklabels([])
+
+    plt.subplot(122)
+    plt.title('Autoencoder')
+    plt.scatter(enc_a[:5000, 0], enc_a[:5000, 1], s=8,
+                cmap='tab10')
+    plt.gca().get_xaxis().set_ticklabels([])
+    plt.gca().get_yaxis().set_ticklabels([])
+
+    plt.tight_layout()
+    plt.savefig(os.path.join(output_path, 'PCA_vs_autoencoder.png'))

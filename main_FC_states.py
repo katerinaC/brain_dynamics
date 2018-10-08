@@ -12,11 +12,11 @@ import os
 
 from data_processing_functional_connectivity import \
     preform_lle_on_dynamic_connectivity, preform_pca_on_dynamic_connectivity, \
-    functional_connectivity_dynamics
+    functional_connectivity_dynamics, dynamic_functional_connectivity
 from modeling_FC_states import kmeans_clustering, kmeans_clustering_mean_score, \
-    dbscan
+    dbscan, autoencoder
 from utilities import convert_components, \
-    create_new_output_path, create_dir
+    create_new_output_path, create_dir, preprocess_autoencoder
 from visualizations import plot_functional_connectivity_matrix, plot_states_line
 
 
@@ -43,6 +43,8 @@ def parse_args():
     parser.add_argument('--lle', action='store_true', default=False,
                         help='Perform Locally Linear Embedding data dimension '
                              'reduction', required=False)
+    parser.add_argument('--autoen', action='store_true', default=False,
+                        help='Perform autoencoder data dimension reduction', required=False)
     parser.add_argument('--clusters', type=int, default=None,
                         help='Number of clusters', required=False)
     parser.add_argument('--db', action='store_true', default=False,
@@ -65,12 +67,16 @@ def main():
     clusters = args.clusters
     t_phases = args.phases
     db = args.db
+    autoen = args.autoen
 
     create_dir(output_path)
 
+    new_outputs = []
     output_paths = []
+    dfc_paths = []
     for input_path in input_paths:
         new_output = create_new_output_path(input_path, output_path)
+        new_outputs.append(new_output)
         create_dir(new_output)
         output_paths.append(os.path.join(new_output, 'components_matrix.npz'))
         if pca:
@@ -88,11 +94,23 @@ def main():
                                                           new_output)
             plot_functional_connectivity_matrix(fcd_matrix, output_path)
 
-    if clusters is not None:
+        if autoen:
+            dfc_path = dynamic_functional_connectivity(input_path, new_output, brain_areas,
+                                                       pattern)
+            dfc_paths.append(dfc_path)
+
+    if autoen:
+        dfc_all = preprocess_autoencoder(dfc_paths, output_path, brain_areas)
+        encoded = autoencoder(dfc_all, output_path)
+
+    if clusters is not None and autoen is False:
         # concatenate all data
         concatenated = convert_components(output_paths, output_path)
         kmeans_clustering_mean_score(concatenated, output_path,
                                      clusters)
+    elif clusters is not None and autoen is True:
+        kmeans_clustering_mean_score(encoded, output_path, clusters)
+
     elif db:
         concatenated = convert_components(output_paths, output_path)
         dbscan(concatenated, output_path)
@@ -101,10 +119,6 @@ def main():
         # perform clustering on data separately
         clusters = kmeans_clustering(components, output_path)
         plot_states_line(clusters, t_phases, output_path)
-
-    # hidden_states, predict_proba, n_components, markov_array = hidden_markov_model_pomegranate(
-    # pca_components, output_path)
-    # plot_hidden_states(hidden_states, n_components, markov_array, output_path)
 
 
 if __name__ == '__main__':

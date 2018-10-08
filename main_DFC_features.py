@@ -31,7 +31,12 @@ def parse_args():
     parser.add_argument('--starts', type=str,
                         help='Path starts json file', required=True)
     parser.add_argument('--clusters', type=str,
-                        help='Path to clusters file clustered_matrix', required=True)
+                        help='Path to clusters file concatentated_matrix_clusters',
+                        required=True)
+    parser.add_argument('--features', type=int,
+                        help='Number of features (brain areas) - for PCA: BA * 2,'
+                             'for autoencoder: number of features in encoded',
+                        required=True)
     return parser.parse_args()
 
 
@@ -44,11 +49,11 @@ def main():
     output_path = args.output
     starts_json = args.starts
     clusters = args.clusters
+    brain_areas = args.features
 
     # Load labels and starts json and divide labels by tasks into separate
     # folders
     labels = np.load(clusters)['arr_0']
-    brain_areas = (labels.shape[1] - 1) / 2  # Number of brain areas
     with open(starts_json) as s:
         starts = json.load(s)
     clusters = []
