@@ -128,7 +128,7 @@ def preform_pca_on_dynamic_connectivity(input_path, output_path, brain_areas,
             np.savez(os.path.join(dfc_output, 'subject_{}_time_{}'.format(n, t)), dFC)
             pca = PCA(n_components=2)
             # normalize
-            dFC = preprocessing.normalize(dFC, norm='l2')
+            # dFC = preprocessing.normalize(dFC, norm='l2')
             pca.fit(dFC)
             pca_dict = {
                 'components': pca.components_.tolist(),
