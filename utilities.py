@@ -243,7 +243,8 @@ def separate_concat_array(input_path, starts_json, output_path, n_clusters):
 def preprocess_autoencoder(input_paths, output_path, brain_areas):
     """
     Preprocesses data for autoencoder. Takes all dynamic functional connectivity
-    matrices and concatenates them together.
+    matrices and concatenates them together. Also, creates array_starts.json for
+    further processing.
 
     :param input_paths: paths to input directories
     :type input_paths: []
@@ -255,9 +256,18 @@ def preprocess_autoencoder(input_paths, output_path, brain_areas):
     :rtype: np.ndarray, int
     """
     all_paths = []
+    start = [0]
+    dict = {}
     for path in tqdm(input_paths):
         all_subjects_paths = return_paths_list(path, output_path, '.npz')
+        n_subjects_times = len(all_subjects_paths)
         all_paths.extend(all_subjects_paths)
+        dict.update({os.path.split(os.path.split(path)[0])[1]: (
+        start[input_paths.index(path)],
+        start[input_paths.index(path)] + n_subjects_times)})
+        start.append((n_subjects_times + start[input_paths.index(path)]))
+    with open(os.path.join(output_path, 'arrays_starts.json'), 'w') as fp:
+        json.dump(dict, fp)
     n_samples = len(all_paths)
     dfc_all = np.full((n_samples, brain_areas, brain_areas),
                       fill_value=0).astype(np.float64)

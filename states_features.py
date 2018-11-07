@@ -6,9 +6,11 @@ Katerina Capouskova 2018, kcapouskova@hotmail.com
 import json
 import logging
 import os
+
 import scipy
 
 import numpy as np
+from permute.core import two_sample
 from scipy.stats import stats
 
 from utilities import create_dir
@@ -122,6 +124,31 @@ def students_t_test(group_a, group_b, output_path):
     with open(os.path.join(output_path, 'students_t_test.json'), 'w') as fp:
         json.dump(dict, fp)
     return t, p
+
+
+def permutation_t_test(group_a, group_b, output_path):
+    """
+    Computes a permutation test based on a t-statistic. Returns and t value,
+    p value, a H0 for two groups.
+
+    :param group_a: clusters array of a first group
+    :type group_a: np.ndarray
+    :param group_b: clusters array of a second group
+    :type group_b: np.ndarray
+    :param output_path: path to output directory
+    :type output_path: str
+    """
+    create_dir(output_path)
+    logging.basicConfig(
+        filename=os.path.join(output_path, 'permutation_t_test.log'),
+        level=logging.INFO)
+    p, t = two_sample(group_a, group_b, reps=5000, stat='t',
+                      alternative='two-sided', seed=20)
+    logging.info('Permutation T-test value: {}, p-value: {}'.format(t, p))
+    dict = {'Permutation T-test value': t, 'p-value': p}
+    with open(os.path.join(output_path, 'permutation_t_test.json'), 'w') as fp:
+        json.dump(dict, fp)
+    return p, t
 
 
 def p_value_stars(p_value):

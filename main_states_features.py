@@ -9,6 +9,7 @@ Katerina Capouskova 2018, kcapouskova@hotmail.com
 
 import argparse
 import itertools
+import json
 import os
 
 import numpy as np
@@ -17,7 +18,7 @@ from tqdm import tqdm
 
 from states_features import distribution_probability_lifetime, \
     variance_of_states, entropy_of_states, students_t_test, \
-    mean_lifetime_of_state, probability_of_state
+    mean_lifetime_of_state, probability_of_state, permutation_t_test
 from utilities import create_dir, separate_concat_array
 from visualizations import plot_variance, plot_probabilities_barplots, \
     plot_lifetimes_barplots
@@ -40,6 +41,10 @@ def parse_args():
     parser.add_argument('--starts', type=str,
                         help='Path to json with starts to separate in concat',
                         required=False)
+    parser.add_argument('--sub_t', type=str,
+                        help='Path to json with task names and corresponding '
+                             'time points and number of subjects',
+                        required=False)
     parser.add_argument('--separate', action='store_true', default=False,
                         help='Separate tasks from in the concatenated matrix',
                         required=False)
@@ -59,6 +64,7 @@ def main():
     n_clusters = args.n_clusters
     starts_json = args.starts
     clusters = args.clusters
+    sub_t = args.sub_t
 
     create_dir(output_path)
     reduced_components = np.load(input_path)['arr_0'][:, :-1]
@@ -66,11 +72,15 @@ def main():
     labels = np.load(clusters)['arr_0']
     plot_variance(labels, variance, output_path)
     probabilities, lifets = distribution_probability_lifetime(labels, output_path, n_clusters)
+    probas_dict = probability_of_state(labels, n_clusters, output_path)
+    lts_dict = mean_lifetime_of_state(labels, n_clusters, output_path)
     entropy_of_states(probabilities, output_path, n_clusters)
+    times_subjects = json.load(open(sub_t))
 
     if separate:
         probas_p_values = []
         lifetimes_p_values = []
+        conditions = []
         new_paths = separate_concat_array(input_path, starts_json, output_path,
                                           n_clusters)
         for path in tqdm(new_paths):
@@ -86,47 +96,66 @@ def main():
             entropy_of_states(probas, output_p, n_clusters)
 
         for a, b in itertools.combinations(new_paths, 2):
-            group_a = np.load(a)['arr_0'][:, -1]
-            group_b = np.load(b)['arr_0'][:, -1]
             a_name = os.path.basename(os.path.dirname(a))
             b_name = os.path.basename(os.path.dirname(b))
+            s_t_a = times_subjects[a_name]
+            a_labels = np.load(a)['arr_0'][:, -1]
+            group_a = np.reshape(a_labels, (s_t_a[0], s_t_a[1]))
+            s_t_b = times_subjects[b_name]
+            b_labels = np.load(b)['arr_0'][:, -1]
+            group_b = np.reshape(b_labels, (s_t_b[0], s_t_b[1]))
             output = os.path.join(output_path, a_name + '_' + b_name)
             create_dir(output)
-            proba_a = probability_of_state(group_a, n_clusters, output)
-            proba_a = {int(k): v for k,v in proba_a.items()}
-            proba_b = probability_of_state(group_b, n_clusters, output)
-            proba_b = {int(k): v for k, v in proba_b.items()}
-            lt_a = mean_lifetime_of_state(group_a, n_clusters, output)
-            lt_a = {int(k): v for k, v in lt_a.items()}
-            lt_b = mean_lifetime_of_state(group_b, n_clusters, output)
-            lt_b = {int(k): v for k, v in lt_b.items()}
-            probas_a = [proba_a[i] for i in group_a]
-            probas_b = [proba_b[y] for y in group_b]
-            lts_a = [lt_a[m] for m in group_a]
-            lts_b = [lt_b[n] for n in group_b]
-            cond_a = [a_name for i in range(len(group_a))]
-            cond_b = [b_name for z in range(len(group_b))]
-            dict_prob = {'probability': probas_a + probas_b,
-                         'lifetime': lts_a + lts_b,
+            a_probas = []
+            b_probas = []
+            a_lt = []
+            b_lt = []
+
+            for s_a in range(s_t_a[0]):
+                proba_a = probability_of_state(group_a[s_a, :], n_clusters, output)
+                a_proba_list = [proba_a[i] for i in group_a[s_a, :]]
+                a_probas.extend(a_proba_list)
+                lt_a = mean_lifetime_of_state(group_a[s_a, :], n_clusters,
+                                              output)
+                a_lt_list = [lt_a[i] for i in group_a[s_a, :]]
+                a_lt.extend(a_lt_list)
+
+            for s_b in range(s_t_b[0]):
+                proba_b = probability_of_state(group_b[s_b, :], n_clusters,
+                                               output)
+                b_proba_list = [proba_b[i] for i in group_b[s_b, :]]
+                b_probas.extend(b_proba_list)
+                lt_b = mean_lifetime_of_state(group_b[s_b, :], n_clusters,
+                                              output)
+                b_lt_list = [lt_b[i] for i in group_b[s_b, :]]
+                b_lt.extend(b_lt_list)
+
+            cond_a = [a_name for i in range(len(a_labels))]
+            cond_b = [b_name for z in range(len(b_labels))]
+
+            dict_prob = {'probability': a_probas + b_probas,
+                         'lifetime': a_lt + b_lt,
                          'condition': cond_a + cond_b,
-                         'cluster': group_a.tolist() + group_b.tolist()}
+                         'cluster': a_labels.tolist() + b_labels.tolist()}
             df = pd.DataFrame(data=dict_prob)
             df.to_csv(os.path.join(output, 'probas_lt_dataframe.csv'))
             plot_probabilities_barplots(df, output)
             plot_lifetimes_barplots(df, output)
             for c in tqdm(range(n_clusters)):
                 df_n = df[df['cluster'] == c]
-                con_a = df_n[df_n['condition'] == a_name]
-                con_b = df_n[df_n['condition'] == b_name]
-                t_prob, p_prob = students_t_test(con_a['probability'], con_b['probability'],
+                con_a_df = df_n[df_n['condition'] == a_name]
+                con_b_df = df_n[df_n['condition'] == b_name]
+                p_prob, t_prob = permutation_t_test(con_a_df['probability'], con_b_df['probability'],
                                                  os.path.join(output, str(c), 'probability'))
-                t_lt, p_lt = students_t_test(con_a['lifetime'],
-                                             con_b['lifetime'],
+                p_lt, t_lt = permutation_t_test(con_a_df['lifetime'],
+                                             con_b_df['lifetime'],
                                              os.path.join(output, str(c), 'lifetime'))
                 probas_p_values.append(p_prob)
                 lifetimes_p_values.append(p_lt)
+                conditions.append(a_name + '_' + b_name + '_' + str(c))
         p_values = pd.DataFrame({'probabilities_p': probas_p_values,
-                                 'lifetimes_p': lifetimes_p_values})
+                                 'lifetimes_p': lifetimes_p_values,
+                                 'conditions': conditions})
         p_values.to_csv(os.path.join(output_path, 'p_values_{}.csv'.format(n_clusters)))
 
 

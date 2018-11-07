@@ -23,7 +23,7 @@ from utilities import return_paths_list, create_dir
 
 def convert_to_phases(input_path, output_path, brain_areas, t_phases, subject):
     """
-    Converts raw data into phases by Hilbert Transform
+    Converts BOLD signal into phases by Hilbert Transform with filtering included.
 
     :param input_path: path to input file
     :type input_path: str
@@ -43,31 +43,59 @@ def convert_to_phases(input_path, output_path, brain_areas, t_phases, subject):
     for area in tqdm(range(0, brain_areas)):
         # select by columns, transform to phase
         time_series = pylab.demean(signal.detrend(array[:, area]))
-        phases[area, :] = np.angle(signal.hilbert(time_series))
+        filtered_ts = filter_signal(time_series)
+        phases[area, :] = np.angle(signal.hilbert(filtered_ts))
     np.savez(os.path.join(output_path, 'phases_{}'.format(subject)), phases)
     return phases
 
 
-def dynamic_functional_connectivity(input_path, output_path, brain_areas,
-                                    pattern):
+def filter_signal(time_series, TR=2.0):
+    """
+    Performs bandpass filtering of BOLD signal data.
+
+    :param time_series: time series array
+    :type time_series: np.ndarray
+    :param TR: repetition time
+    :type TR: int
+    :return: filtered time series
+    :rtype: np.ndarray
+    """
+    # Nyquist
+    nyq = 1.0 / (2.0 * TR)
+    # Lowpass frequency of filter (Hz)
+    low = 0.04 / nyq
+    # Highpass frequency of filter (Hz)
+    high = 0.07 / nyq
+    Wn = [low, high]
+    # 2nd order butterworth filter
+    k = 2
+    # Constructing the filter
+    b, a = signal.butter(k, Wn, btype='band', output='ba')
+    # Filtering
+    filt_ts = signal.lfilter(b, a, time_series)
+    return filt_ts
+
+
+def dynamic_functional_connectivity(paths, output_path, brain_areas,
+                                    pattern, t_phases, n_subjects):
     """
     Computes the dynamic functional connectivity of brain areas.
 
-    :param input_path: path to input dir
-    :type input_path: str
+    :param paths: list of paths in input dir
+    :type paths: []
     :param output_path: path to output directory
     :type output_path: str
     :param brain_areas: number of brain areas
     :type brain_areas: int
     :param pattern: pattern of input files
     :type pattern: str
+    :param t_phases: number of time points
+    :type t_phases: int
+    :param n_subjects: number of subjects
+    :type n_subjects:int
     :return: dFC output path
     :rtype: str
     """
-    paths = return_paths_list(input_path, output_path, pattern=pattern)
-    n_subjects = len(paths)
-    array = np.genfromtxt(paths[0], delimiter=',')
-    t_phases = array.shape[0]
     dFC = np.full((brain_areas, brain_areas), fill_value=0).astype(np.float64)
 
     for n in tqdm(range(n_subjects)):
@@ -88,27 +116,27 @@ def dynamic_functional_connectivity(input_path, output_path, brain_areas,
     return dfc_output
 
 
-def preform_pca_on_dynamic_connectivity(input_path, output_path, brain_areas,
-                                        pattern):
+def preform_pca_on_dynamic_connectivity(paths, output_path, brain_areas,
+                                        pattern, t_phases, n_subjects):
     """
     Computes the dynamic connectivity of brain areas with performing
     a PCA returning its matrix.
 
-    :param input_path: path to input dir
-    :type input_path: str
+    :param paths: list of paths in input dir
+    :type paths: []
     :param output_path: path to output directory 
     :type output_path: str
     :param brain_areas: number of brain areas
     :type brain_areas: int
     :param pattern: pattern of input files
     :type pattern: str
+    :param t_phases: number of time points
+    :type t_phases: int
+    :param n_subjects: number of subjects
+    :type n_subjects:int
     :return: PCA matrix, PCA matrix shape
     :rtype: np.ndarray, tuple
     """
-    paths = return_paths_list(input_path, output_path, pattern=pattern)
-    n_subjects = len(paths)
-    array = np.genfromtxt(paths[0], delimiter=',')
-    t_phases = array.shape[0]
     dFC = np.full((brain_areas, brain_areas), fill_value=0).astype(np.float64)
     pca_components = np.full((n_subjects, t_phases, (brain_areas * 2)),
                              fill_value=0).astype(np.float64)
@@ -149,27 +177,27 @@ def preform_pca_on_dynamic_connectivity(input_path, output_path, brain_areas,
     return pca_components, pca_components.shape
 
 
-def preform_lle_on_dynamic_connectivity(input_path, output_path, brain_areas,
-                                        pattern):
+def preform_lle_on_dynamic_connectivity(paths, output_path, brain_areas,
+                                        pattern, t_phases, n_subjects):
     """
     Computes the dynamic connectivity of brain areas with performing
     a locally linear embedding returning its matrix.
 
-    :param input_path: path to input dir
-    :type input_path: str
+    :param paths: list of paths in input dir
+    :type paths: []
     :param output_path: path to output directory 
     :type output_path: str
     :param brain_areas: number of brain areas
     :type brain_areas: int
     :param pattern: pattern of input files
     :type pattern: str
+    :param t_phases: number of time points
+    :type t_phases: int
+    :param n_subjects: number of subjects
+    :type n_subjects:int
     :return: LLE matrix, LLE matrix shape
     :rtype: np.ndarray, tuple
     """
-    paths = return_paths_list(input_path, output_path, pattern=pattern)
-    n_subjects = len(paths)
-    array = np.genfromtxt(paths[0], delimiter=',')
-    t_phases = array.shape[0]
     dFC = np.full((brain_areas, brain_areas), fill_value=0).astype(np.float64)
     lle_components = np.full((n_subjects, t_phases, (brain_areas * 2)),
                              fill_value=0).astype(np.float64)

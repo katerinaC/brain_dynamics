@@ -10,3 +10,4 @@ nitime>=0.7
 pomegranate
 Keras==2.2.2
 tensorflow==1.10.1
+permute==0.1a4

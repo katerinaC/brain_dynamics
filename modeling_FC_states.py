@@ -320,7 +320,7 @@ def autoencoder(dfc_all, output_path):
     encoder = Model(m.input, m.get_layer('bottleneck').output)
     Zenc = encoder.predict(dfc_all_2d)  # bottleneck representation
     np.savez(os.path.join(output_path, 'encoder_66_features'), Zenc)
-    Renc = m.predict(x_train)  # reconstruction
+    Renc = m.predict(dfc_all_2d)  # reconstruction
     np.savez(os.path.join(output_path, 'autoencoder_reconstruction'), Renc)
     logging.info('MSE:{}, Val loss:{}'.format(history.history['loss'],
                                               history.history['val_loss']))
