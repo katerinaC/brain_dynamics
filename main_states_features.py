@@ -14,6 +14,7 @@ import os
 
 import numpy as np
 import pandas as pd
+from statsmodels.stats.multitest import multipletests
 from tqdm import tqdm
 
 from states_features import distribution_probability_lifetime, \
@@ -71,10 +72,10 @@ def main():
     variance = variance_of_states(reduced_components, output_path)
     labels = np.load(clusters)['arr_0']
     plot_variance(labels, variance, output_path)
-    probabilities, lifets = distribution_probability_lifetime(labels, output_path, n_clusters)
-    probas_dict = probability_of_state(labels, n_clusters, output_path)
-    lts_dict = mean_lifetime_of_state(labels, n_clusters, output_path)
-    entropy_of_states(probabilities, output_path, n_clusters)
+    probabilities, lifets, df_prob = distribution_probability_lifetime(labels, output_path, n_clusters)
+    for i in range(n_clusters):
+        probs = df_prob[df_prob['clusters'] == i]
+        entropy_of_states(probs['probabilities'], output_path, i)
     times_subjects = json.load(open(sub_t))
 
     if separate:
@@ -90,10 +91,8 @@ def main():
             matrix = np.load(path)['arr_0']
             clusters = matrix[:, -1]
             reduced_task = matrix[:, :-1]
-            probas, lifetimes = distribution_probability_lifetime(clusters, output_p, n_clusters)
             task_var = variance_of_states(reduced_task, output_p)
             plot_variance(clusters, task_var, output_p)
-            entropy_of_states(probas, output_p, n_clusters)
 
         for a, b in itertools.combinations(new_paths, 2):
             a_name = os.path.basename(os.path.dirname(a))
@@ -145,6 +144,14 @@ def main():
                 df_n = df[df['cluster'] == c]
                 con_a_df = df_n[df_n['condition'] == a_name]
                 con_b_df = df_n[df_n['condition'] == b_name]
+                create_dir(os.path.join(
+                    output_path, a_name, str(c)))
+                create_dir(os.path.join(
+                    output_path, b_name, str(c)))
+                entropy_of_states(con_a_df['probability'], os.path.join(
+                    output_path, a_name, str(c)), c)
+                entropy_of_states(con_b_df['probability'],os.path.join(
+                    output_path, b_name, str(c)), c)
                 p_prob, t_prob = permutation_t_test(con_a_df['probability'], con_b_df['probability'],
                                                  os.path.join(output, str(c), 'probability'))
                 p_lt, t_lt = permutation_t_test(con_a_df['lifetime'],
@@ -153,7 +160,11 @@ def main():
                 probas_p_values.append(p_prob)
                 lifetimes_p_values.append(p_lt)
                 conditions.append(a_name + '_' + b_name + '_' + str(c))
+        probas_p_adjusted = multipletests(probas_p_values, alpha=0.05, method='bonferroni')
+        lt_p_adjusted = multipletests(lifetimes_p_values, alpha=0.05, method='bonferroni')
         p_values = pd.DataFrame({'probabilities_p': probas_p_values,
+                                 'bonferroni_probans_p': probas_p_adjusted[1].tolist(),
+                                 'bonferroni_lt_p': lt_p_adjusted[1].tolist(),
                                  'lifetimes_p': lifetimes_p_values,
                                  'conditions': conditions})
         p_values.to_csv(os.path.join(output_path, 'p_values_{}.csv'.format(n_clusters)))

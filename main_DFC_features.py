@@ -8,12 +8,13 @@ import argparse
 import json
 import os
 import shutil
-
+import pandas as pd
 import numpy as np
 from tqdm import tqdm
 
 from utilities import create_dir, return_paths_list
-from visualizations import plot_dfc_areas_correlation
+from visualizations import plot_dfc_areas_correlation, \
+    plot_averaged_dfc_clustermap
 
 
 def parse_args():
@@ -37,6 +38,9 @@ def parse_args():
                         help='Number of features (brain areas) - for PCA: BA * 2,'
                              'for autoencoder: number of features in encoded',
                         required=True)
+    parser.add_argument('--names', type=str,
+                        help='Path to a file with brain areas names (.npy file)',
+                        required=False)
     return parser.parse_args()
 
 
@@ -50,6 +54,7 @@ def main():
     starts_json = args.starts
     clusters = args.clusters
     brain_areas = args.features
+    names = args.names
 
     # Load labels and starts json and divide labels by tasks into separate
     # folders
@@ -90,7 +95,16 @@ def main():
             avg_dfc[i, :, :] = matrix
         averaged = np.average(avg_dfc, 0)  # Average over all matrices in a cluster
         np.savez(os.path.join(c, 'averaged_dfc'), averaged)
-        plot_dfc_areas_correlation(averaged, c)
+
+        # import brain area names if known
+        if names is not None:
+            names_array = np.load(names)
+            df = pd.DataFrame(averaged, index=names_array, columns=names_array)
+            plot_dfc_areas_correlation(df, c)
+            plot_averaged_dfc_clustermap(df, c)
+        else:
+            plot_dfc_areas_correlation(averaged, c)
+            plot_averaged_dfc_clustermap(averaged, c)
 
 
 if __name__ == '__main__':

@@ -11,7 +11,7 @@ import pandas as pd
 import seaborn as sns
 from matplotlib import cm
 
-sns.set()
+sns.set_context("paper")
 
 
 def plot_functional_connectivity_matrix(fcd_matrix, output_path):
@@ -37,25 +37,47 @@ def plot_functional_connectivity_matrix(fcd_matrix, output_path):
 
 def plot_dfc_areas_correlation(connectivity, output_path):
     """
-    Plots brain areas correlations of one subject at one time point (NxN).
+    Plots brain areas correlations (NxN).
 
     :param connectivity: array representing dynamical functional conn.
-    :type connectivity: np.ndarray
+    :type connectivity: np.ndarray, pd.DataFrame
     :param output_path: path to output directory
     :type output_path: str
     """
-    df = pd.DataFrame(data=connectivity)
-    corr = df.corr()
-    fig, ax = plt.subplots(1)
+    if isinstance(connectivity, pd.DataFrame):
+        pass
+    else:
+        connectivity = pd.DataFrame(data=connectivity)
+    fig, ax = plt.subplots(figsize=(50, 50))
     #cmap = sns.diverging_palette(250, 15, as_cmap=True, center="dark")
-    heat_map = sns.heatmap(corr, cmap='RdYlGn', ax=ax,
-                           square=True)
+    heat_map = sns.heatmap(connectivity, cmap='RdYlGn', ax=ax,
+                           square=True, vmin=-1, vmax=1, annot=True)
     plt.xlabel('Brain area')
     plt.ylabel('Brain area')
-    heat_map.set_yticklabels(heat_map.get_yticklabels(), rotation=0, fontsize=4)
-    heat_map.set_xticklabels(heat_map.get_xticklabels(), rotation=90, fontsize=4)
+    heat_map.set_yticklabels(heat_map.get_yticklabels(), rotation=0, fontsize=14)
+    heat_map.set_xticklabels(heat_map.get_xticklabels(), rotation=90, fontsize=14)
 
     plt.savefig(os.path.join(output_path, 'Area_correlation_heatmap_averaged.png'))
+    # plt.show()
+
+
+def plot_averaged_dfc_clustermap(data, output_path):
+    """
+    Plots brain areas correlations (NxN).
+
+    :param data: array representing average dfc of a state
+    :type data: pd.DataFrame
+    :param output_path: path to output directory
+    :type output_path: str
+    """
+    # cmap = sns.diverging_palette(250, 15, as_cmap=True, center="dark")
+    c_map = sns.clustermap(data, cmap='RdYlGn', yticklabels=True,
+                           xticklabels=True)
+    plt.xlabel('Brain area')
+    plt.ylabel('Brain area')
+
+    plt.savefig(
+        os.path.join(output_path, 'Averaged_dfc_clustered.png'))
     # plt.show()
 
 
@@ -359,3 +381,24 @@ def plot_autoe_vs_pca(pca_a, enc_a, output_path):
 
     plt.tight_layout()
     plt.savefig(os.path.join(output_path, 'PCA_vs_autoencoder.png'))
+
+
+def plot_val_los_autoe(val, loss, output_path):
+    """
+    Plots the training and validation loss function of an autoencoder.
+
+    :param val: validation loss values
+    :type val: []
+    :param loss: training loss values
+    :type loss: []
+    :param output_path: path to output directory
+    :type output_path: str
+    """
+    sns.set(style="whitegrid")
+    dict = {'validation': val, 'training': loss}
+    data = pd.DataFrame(data=dict)
+    sns.lineplot(data=data, palette="tab10", linewidth=2.5)
+    plt.xlabel('Epochs')
+    plt.ylabel('Loss')
+    plt.title('Training and validation loss')
+    plt.savefig(os.path.join(output_path, 'Val_loss_autoencoder.png'))

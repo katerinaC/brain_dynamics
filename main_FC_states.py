@@ -67,7 +67,7 @@ def main():
     brain_areas = args.areas
     pca = args.pca
     lle = args.lle
-    clusters = args.clusters
+    n_clusters = args.clusters
     t_phases = args.phases
     db = args.db
     autoen = args.autoen
@@ -114,13 +114,13 @@ def main():
                                                     brain_areas)
         encoded = autoencoder(dfc_all, output_path)
 
-    if clusters is not None and autoen is False:
+    if n_clusters is not None and autoen is False:
         # concatenate all data
         concatenated = convert_components(output_paths, output_path)
-        kmeans_clustering_mean_score(concatenated, output_path, clusters)
+        kmeans_clustering_mean_score(concatenated, output_path, n_clusters)
 
-    elif clusters is not None and autoen is True:
-        kmeans_clustering_mean_score(encoded, output_path, clusters)
+    elif n_clusters is not None and autoen is True:
+        kmeans_clustering_mean_score(encoded, output_path, n_clusters)
 
     elif db:
         concatenated = convert_components(output_paths, output_path)

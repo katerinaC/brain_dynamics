@@ -8,7 +8,7 @@ import logging
 import os
 
 import scipy
-
+import pandas as pd
 import numpy as np
 from permute.core import two_sample
 from scipy.stats import stats
@@ -32,18 +32,15 @@ def probability_of_state(clusters, n_clusters, output_path):
     logging.basicConfig(
         filename=os.path.join(output_path, 'probability_of_states.log'),
         level=logging.INFO)
-    dict = {}
+    dict_p = {}
     for n in range(n_clusters):
-        separate_cluster = []
-        for c in clusters:
-            if c == n:
-                separate_cluster.append(c)
-        p = float(len(separate_cluster))/float(len(clusters))
-        dict.update({n: p})
+        n_list = [c for c in clusters if c == n]
+        p = float(len(n_list))/float(len(clusters))
+        dict_p.update({n: p})
         logging.info('Probability of state: {} is: {}'.format(n, p))
     with open(os.path.join(output_path, 'probability.json'), 'w') as fp:
-        json.dump(dict, fp)
-    return dict
+        json.dump(dict_p, fp)
+    return dict_p
 
 
 def mean_lifetime_of_state(clusters, n_clusters, output_path):
@@ -61,7 +58,7 @@ def mean_lifetime_of_state(clusters, n_clusters, output_path):
     """
     # Feature of the data: Repetition time in seconds
     TR = 2
-    dict = {}
+    dict_lt = {}
     logging.basicConfig(
         filename=os.path.join(output_path, 'mean_lifetime_of_states.log'),
         level=logging.INFO)
@@ -97,10 +94,10 @@ def mean_lifetime_of_state(clusters, n_clusters, output_path):
             c_duration = 0
         mean_duration = np.mean(c_duration) * TR
         logging.info('Mean lifetime of state: {} is: {}'.format(n, mean_duration))
-        dict.update({n: mean_duration})
+        dict_lt.update({n: mean_duration})
     with open(os.path.join(output_path, 'mean_state_lifetime.json'), 'w') as fp:
-        json.dump(dict, fp)
-    return dict
+        json.dump(dict_lt, fp)
+    return dict_lt
 
 
 def students_t_test(group_a, group_b, output_path):
@@ -182,19 +179,20 @@ def distribution_probability_lifetime(clusters, output_path, n_clusters):
     :type output_path: str
     :param n_clusters: number of clusters
     :type n_clusters: int
-    :return: proba_list:array of probabilities, lifetimes_list: array of lifetimes
-    :rtype: np.ndarray, np.ndarray
+    :return: proba_list:array of probabilities, lifetimes_list: array of lifetimes,
+    df: dataframe
+    :rtype: np.ndarray, np.ndarray, pd.DataFrame
     """
     probas = probability_of_state(clusters, n_clusters, output_path)
     lifetimes = mean_lifetime_of_state(clusters, n_clusters, output_path)
     proba_list = []
     lifetimes_list = []
-    for n in range(n_clusters):
-        for elem in clusters:
-            if elem == n:
-                proba_list.append(probas[n])
-                lifetimes_list.append(lifetimes[n])
-    return np.array(proba_list), np.array(lifetimes_list)
+    for elem in clusters:
+        proba_list.append(probas[elem])
+        lifetimes_list.append(lifetimes[elem])
+    probas_dict = {'clusters': clusters, 'probabilities': proba_list}
+    df = pd.DataFrame(data=probas_dict)
+    return np.array(proba_list), np.array(lifetimes_list), df
 
 
 def variance_of_states(reduced_components, output_path):
@@ -214,7 +212,7 @@ def variance_of_states(reduced_components, output_path):
     return variance
 
 
-def entropy_of_states(probabilities, output_path, n_clusters):
+def entropy_of_states(probabilities, output_path, n_cluster):
     """
     Computes the entropy of probabilities of states
 
@@ -222,19 +220,14 @@ def entropy_of_states(probabilities, output_path, n_clusters):
     :type probabilities: np.ndarray
     :param output_path: path to output directory
     :type output_path: str
-    :param n_clusters: number of clusters
-    :type: n_clusters: int
+    :param n_cluster: number of the cluster
+    :type: n_cluster: int
     :return: entropy: calculated entropy
     :rtype: int
     """
-    logging.basicConfig(
-        filename=os.path.join(output_path, 'entropy_n_clusters_{}.log'.format(
-            n_clusters)),
-        level=logging.INFO)
     entropy = scipy.stats.entropy(probabilities)
-    logging.info('State {} entropy is {}'.format(n_clusters, entropy))
-    dict = {'State': n_clusters, 'entropy': entropy}
-    with open(os.path.join(output_path, 'entropy.json'), 'w') as fp:
+    dict = {'State': n_cluster, 'entropy': entropy}
+    with open(os.path.join(output_path, 'entropy_n_cluster_{}.json'.format(
+            n_cluster)), 'w') as fp:
         json.dump(dict, fp)
     return entropy
-

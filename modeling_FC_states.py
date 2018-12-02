@@ -33,7 +33,8 @@ from sklearn.neighbors import kneighbors_graph
 from tqdm import tqdm
 
 from states_features import probability_of_state, mean_lifetime_of_state
-from visualizations import plot_silhouette_analysis, plot_autoe_vs_pca
+from visualizations import plot_silhouette_analysis, plot_autoe_vs_pca, \
+    plot_val_los_autoe
 
 
 def kmeans_clustering(reduced_components, output_path):
@@ -51,7 +52,6 @@ def kmeans_clustering(reduced_components, output_path):
                                               'clustering_FC_states.log'),
                         level=logging.INFO)
     samples, timesteps, features = reduced_components.shape
-    # new matrix ((time steps x subjects) x number of features(brain areas * n_components))
     reduced_components_2d = np.reshape(reduced_components, (samples * timesteps, features))
     results = []
     n_clusters = []
@@ -291,7 +291,7 @@ def autoencoder(dfc_all, output_path):
     dfc_all_2d = preprocessing.normalize(dfc_all_2d, norm='l2')
 
     # train and test partition
-    x_train, x_test = train_test_split(dfc_all_2d, test_size=0.20)
+    x_train, x_test = train_test_split(dfc_all_2d, test_size=0.10)
 
     # PCA
     mu = x_train.mean(axis=0)
@@ -324,7 +324,8 @@ def autoencoder(dfc_all, output_path):
     np.savez(os.path.join(output_path, 'autoencoder_reconstruction'), Renc)
     logging.info('MSE:{}, Val loss:{}'.format(history.history['loss'],
                                               history.history['val_loss']))
-
+    plot_val_los_autoe(history.history['val_loss'], history.history['loss'],
+                       output_path)
     plot_autoe_vs_pca(Zpca, Zenc, output_path)
     return Zenc
 
