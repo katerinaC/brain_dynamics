@@ -252,11 +252,12 @@ def preprocess_autoencoder(input_paths, output_path, brain_areas):
     :type output_path: str
     :param brain_areas: number of brain areas
     :type brain_areas: int
-    :return: array with all dfc matrices, number of samples
-    :rtype: np.ndarray, int
+    :return: array with all dfc matrices, number of samples, list of classes
+    :rtype: np.ndarray, int, list
     """
     all_paths = []
     start = [0]
+    y = []
     dict = {}
     for path in tqdm(input_paths):
         all_subjects_paths = return_paths_list(path, output_path, '.npz')
@@ -266,6 +267,7 @@ def preprocess_autoencoder(input_paths, output_path, brain_areas):
         start[input_paths.index(path)],
         start[input_paths.index(path)] + n_subjects_times)})
         start.append((n_subjects_times + start[input_paths.index(path)]))
+        y += [input_paths.index(path) for i in range(n_subjects_times)]
     with open(os.path.join(output_path, 'arrays_starts.json'), 'w') as fp:
         json.dump(dict, fp)
     n_samples = len(all_paths)
@@ -275,4 +277,4 @@ def preprocess_autoencoder(input_paths, output_path, brain_areas):
         dfc = np.load(p)['arr_0']
         dfc_all[all_paths.index(p), :, :] = dfc
     np.savez(os.path.join(output_path, 'dfc_all'), dfc_all)
-    return dfc_all, n_samples
+    return dfc_all, n_samples, y

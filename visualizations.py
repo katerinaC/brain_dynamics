@@ -48,10 +48,10 @@ def plot_dfc_areas_correlation(connectivity, output_path):
         pass
     else:
         connectivity = pd.DataFrame(data=connectivity)
-    fig, ax = plt.subplots(figsize=(50, 50))
+    fig, ax = plt.subplots(1)
     #cmap = sns.diverging_palette(250, 15, as_cmap=True, center="dark")
-    heat_map = sns.heatmap(connectivity, cmap='RdYlGn', ax=ax,
-                           square=True, vmin=-1, vmax=1, annot=True)
+    heat_map = sns.heatmap(connectivity, cmap='RdYlGn',
+                           square=True, vmin=-1, vmax=1)
     plt.xlabel('Brain area')
     plt.ylabel('Brain area')
     heat_map.set_yticklabels(heat_map.get_yticklabels(), rotation=0, fontsize=14)

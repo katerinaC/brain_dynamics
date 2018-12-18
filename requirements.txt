@@ -4,10 +4,11 @@ scikit-learn>=0.19
 matplotlib>=1.5.1
 pandas>=0.18.1
 tqdm>=4.9.0
-hmmlearn
+hmmlearn>=0.2.1
 seaborn==0.7.1
 nitime>=0.7
 pomegranate
 Keras==2.2.2
 tensorflow==1.10.1
 permute==0.1a4
+imbalanced-learn=0.4.3

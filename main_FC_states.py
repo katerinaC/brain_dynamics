@@ -53,6 +53,8 @@ def parse_args():
     parser.add_argument('--db', action='store_true', default=False,
                         help='Perform DBSCAN clustering algorithm',
                         required=False)
+    parser.add_argument('--imb', action='store_true', default=False,
+                        help='Imbalanced dataset', required=False)
     return parser.parse_args()
 
 
@@ -71,6 +73,7 @@ def main():
     t_phases = args.phases
     db = args.db
     autoen = args.autoen
+    imbalanced = args.imb
 
     create_dir(output_path)
 
@@ -110,9 +113,9 @@ def main():
             dfc_paths.append(dfc_path)
 
     if autoen:
-        dfc_all, n_samples = preprocess_autoencoder(dfc_paths, output_path,
-                                                    brain_areas)
-        encoded = autoencoder(dfc_all, output_path)
+        dfc_all, n_samples, y = preprocess_autoencoder(dfc_paths, output_path,
+                                                       brain_areas)
+        encoded = autoencoder(dfc_all, output_path, y, imbalanced=imbalanced)
 
     if n_clusters is not None and autoen is False:
         # concatenate all data

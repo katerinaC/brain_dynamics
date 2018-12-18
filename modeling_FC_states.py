@@ -22,6 +22,7 @@ import os
 
 import numpy as np
 from hmmlearn import hmm
+from imblearn.under_sampling import RandomUnderSampler
 from keras.layers import Dense
 from keras.models import Sequential, Model
 from keras.optimizers import Adam
@@ -268,7 +269,7 @@ def dbscan(reduced_components, output_path):
     return labels, data_clusters
 
 
-def autoencoder(dfc_all, output_path):
+def autoencoder(dfc_all, output_path, y, imbalanced):
     """
     Performs an autoencoder implemented in Keras framework and plots the
     difference with PCA dim reduction.
@@ -277,6 +278,10 @@ def autoencoder(dfc_all, output_path):
     :type dfc_all: np.ndarray
     :param output_path: path to output directory
     :type output_path: str
+    :param y: class assignment
+    :type y: []
+    :param imbalanced: imbalanced dataset
+    :type imbalanced: bool
     :return: reduced dim. array
     :rtype: np.ndarray
     """
@@ -287,11 +292,26 @@ def autoencoder(dfc_all, output_path):
     all_samples, all_ft_1, all_ft_2 = dfc_all.shape
     dfc_all_2d = dfc_all.reshape(all_samples, (all_ft_1 * all_ft_2))
 
-    # normalize
-    dfc_all_2d = preprocessing.normalize(dfc_all_2d, norm='l2')
+    # balance dataset
+    if imbalanced:
+        rus = RandomUnderSampler(random_state=0, replacement=True)
+        x_resampled, y_resampled = rus.fit_resample(dfc_all_2d, y)
 
-    # train and test partition
-    x_train, x_test = train_test_split(dfc_all_2d, test_size=0.10)
+        # train and test partition
+        x_train_o, x_test_o = train_test_split(x_resampled, test_size=0.10)
+        # normalize
+        normalizer = preprocessing.Normalizer().fit(x_train_o)
+        x_train = normalizer.transform(x_train_o)
+        x_test = normalizer.transform(x_test_o)
+        predict_data = normalizer.transform(dfc_all_2d)
+    else:
+        # train and test partition
+        x_train_o, x_test_o = train_test_split(dfc_all_2d, test_size=0.10)
+        # normalize
+        normalizer = preprocessing.Normalizer().fit(x_train_o)
+        x_train = normalizer.transform(x_train_o)
+        x_test = normalizer.transform(x_test_o)
+        predict_data = normalizer.transform(dfc_all_2d)
 
     # PCA
     mu = x_train.mean(axis=0)
@@ -318,9 +338,9 @@ def autoencoder(dfc_all, output_path):
                     validation_data=(x_test, x_test))
 
     encoder = Model(m.input, m.get_layer('bottleneck').output)
-    Zenc = encoder.predict(dfc_all_2d)  # bottleneck representation
+    Zenc = encoder.predict(predict_data)  # bottleneck representation
     np.savez(os.path.join(output_path, 'encoder_66_features'), Zenc)
-    Renc = m.predict(dfc_all_2d)  # reconstruction
+    Renc = m.predict(predict_data)  # reconstruction
     np.savez(os.path.join(output_path, 'autoencoder_reconstruction'), Renc)
     logging.info('MSE:{}, Val loss:{}'.format(history.history['loss'],
                                               history.history['val_loss']))
