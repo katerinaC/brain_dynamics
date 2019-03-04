@@ -11,6 +11,8 @@ import argparse
 import json
 import os
 import numpy as np
+from sklearn import metrics
+from sklearn.cluster import KMeans
 
 from data_processing_functional_connectivity import \
     preform_lle_on_dynamic_connectivity, preform_pca_on_dynamic_connectivity, \
@@ -20,7 +22,8 @@ from modeling_FC_states import kmeans_clustering, kmeans_clustering_mean_score, 
 from utilities import convert_components, \
     create_new_output_path, create_dir, preprocess_autoencoder, \
     return_paths_list
-from visualizations import plot_functional_connectivity_matrix, plot_states_line
+from visualizations import plot_functional_connectivity_matrix, \
+    plot_states_line, plot_see_against_n_clusters
 
 
 def parse_args():
@@ -124,6 +127,20 @@ def main():
 
     elif n_clusters is not None and autoen is True:
         kmeans_clustering_mean_score(encoded, output_path, n_clusters)
+        sse = []
+        silhouette = []
+        list_k = list(range(2, 20))
+
+        for k in list_k:
+            km = KMeans(n_clusters=k)
+            km.fit(encoded)
+            sse.append(km.inertia_)
+            labels = km.labels_
+            silhouette.append(metrics.silhouette_score(encoded, labels,
+                                                       metric='euclidean',
+                                                       sample_size=500))
+
+        plot_see_against_n_clusters(list_k, sse,silhouette, output_path)
 
     elif db:
         concatenated = convert_components(output_paths, output_path)

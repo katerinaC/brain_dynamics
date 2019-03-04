@@ -402,3 +402,28 @@ def plot_val_los_autoe(val, loss, output_path):
     plt.ylabel('Loss')
     plt.title('Training and validation loss')
     plt.savefig(os.path.join(output_path, 'Val_loss_autoencoder.png'))
+
+
+def plot_see_against_n_clusters(list_k, sse, silhouette, output_path):
+    """
+    Plots the sum of squared distances against number of clusters.
+
+    :param list_k: list of number of clusters
+    :type list_k: []
+    :param sse: list of sum of squared distances
+    :type sse: []
+    :param silhouette: list of mean silhouette scores
+    :type silhouette: []
+    :param output_path: path to output directory
+    :type output_path: str
+    """
+    # Plot sse against k
+    fig, ax1 = plt.subplots()
+    ax2 = ax1.twinx()
+    sil = [1-s for s in silhouette]
+    ax1.plot(list_k, sse, '-o')
+    ax2.plot(list_k, sil, 'ro-')
+    ax1.set_xlabel(r'Number of clusters *k*')
+    ax1.set_ylabel('Sum of squared distance')
+    ax2.set_ylabel('Silhouette score')
+    plt.savefig(os.path.join(output_path, 'sse_sil_n_clusters.png'))

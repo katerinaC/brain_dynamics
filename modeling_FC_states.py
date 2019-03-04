@@ -334,7 +334,7 @@ def autoencoder(dfc_all, output_path, y, imbalanced):
     m.add(Dense(2000, activation='relu'))
     m.add(Dense(4356, activation='sigmoid'))
     m.compile(loss='mean_squared_error', optimizer=Adam())
-    history = m.fit(x_train, x_train, batch_size=256, epochs=50, verbose=1,
+    history = m.fit(x_train, x_train, batch_size=256, epochs=10, verbose=1,
                     validation_data=(x_test, x_test))
 
     encoder = Model(m.input, m.get_layer('bottleneck').output)
