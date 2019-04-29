@@ -10,11 +10,19 @@ To get specific results for the states characteristics, running should be done
 via `main_states_features.py`. This will generate lifetimes and
 probabilities of states and it estimate the p-value between two conditions.
 
+To get averaged DFCs and also separate dfcs according to states for further graph
+analysis, run `main_DFC_features.py`. 
+
+For graph analysis on dfcs in different states(clusters) run 
+`main_graph_analysis.py`.
+
 
 ### Running the script
 
 To run a main script, open your command line, navigate to the directory and run
-it according to the arguments.
+it according to the arguments. Note that you have to have installed all required
+packages as indicated in requirements.txt, preferably within a designated virtual
+environment. 
 
 #### Example for FC states:
 
@@ -27,6 +35,21 @@ it according to the arguments.
 --output users/name/data/tasks_output/states --n_clusters 4
 --starts users/name/data/tasks_output/starts.json --separate
 --clusters users/name/data/tasks_output/clusters.npz`
+
+#### Example for DFC features:
+
+`python main_DFC_features.py --input users/name/data/
+--output users/name/data/tasks_output/dfc_out --n_clusters 4
+--starts users/name/data/tasks_output/starts.json 
+--clusters users/name/data/tasks_output/clusters.npz
+--features 66 --names users/name/data/brain_areas.npy`
+
+
+#### Example for graph analysis:
+
+`python main_graph_analysis.py --input users/name/data/dfc_out
+--output users/name/data/tasks_output/graph_analysis --n_clusters 4
+--tasks flanker, rest, n_back`
 
 ### Data format
 
