@@ -3,6 +3,7 @@ Script that computes functional connectivity dynamics and does clustering of
 brain states.
 Note: check for number of components in dim. reduction and TR in mean
 lifetime of states (default 2 for both).
+Check for delimiter when using .csv
 
 Katerina Capouskova 2018, kcapouskova@hotmail.com
 """
@@ -140,7 +141,7 @@ def main():
                                                        metric='euclidean',
                                                        sample_size=500))
 
-        plot_see_against_n_clusters(list_k, sse,silhouette, output_path)
+        plot_see_against_n_clusters(list_k, sse, silhouette, output_path)
 
     elif db:
         concatenated = convert_components(output_paths, output_path)

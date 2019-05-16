@@ -323,23 +323,23 @@ def autoencoder(dfc_all, output_path, y, imbalanced):
 
     # Autoencoder
     m = Sequential()
-    m.add(Dense(2000, activation='relu', input_shape=(4356,)))
+    m.add(Dense(2000, activation='relu', input_shape=((all_ft_1 * all_ft_2),)))
     m.add(Dense(500, activation='relu'))
     m.add(Dense(250, activation='relu'))
     m.add(Dense(125, activation='relu'))
-    m.add(Dense(66, activation='linear', name="bottleneck"))
+    m.add(Dense(all_ft_1, activation='linear', name="bottleneck"))
     m.add(Dense(125, activation='relu'))
     m.add(Dense(250, activation='relu'))
     m.add(Dense(500, activation='relu'))
     m.add(Dense(2000, activation='relu'))
-    m.add(Dense(4356, activation='sigmoid'))
+    m.add(Dense((all_ft_1 * all_ft_2), activation='sigmoid'))
     m.compile(loss='mean_squared_error', optimizer=Adam())
-    history = m.fit(x_train, x_train, batch_size=256, epochs=10, verbose=1,
+    history = m.fit(x_train, x_train, batch_size=100, epochs=10, verbose=1,
                     validation_data=(x_test, x_test))
 
     encoder = Model(m.input, m.get_layer('bottleneck').output)
     Zenc = encoder.predict(predict_data)  # bottleneck representation
-    np.savez(os.path.join(output_path, 'encoder_66_features'), Zenc)
+    np.savez(os.path.join(output_path, 'encoder_{}_features'.format(all_ft_1)), Zenc)
     Renc = m.predict(predict_data)  # reconstruction
     np.savez(os.path.join(output_path, 'autoencoder_reconstruction'), Renc)
     logging.info('MSE:{}, Val loss:{}'.format(history.history['loss'],
