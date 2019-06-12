@@ -48,17 +48,18 @@ def plot_dfc_areas_correlation(connectivity, output_path):
         pass
     else:
         connectivity = pd.DataFrame(data=connectivity)
-    fig, ax = plt.subplots(1)
+    plt.subplots(figsize=(20, 15))
+    #fig, ax = plt.subplots(1)
     #cmap = sns.diverging_palette(250, 15, as_cmap=True, center="dark")
     heat_map = sns.heatmap(connectivity, cmap='RdYlGn',
                            square=True, vmin=-1, vmax=1)
     plt.xlabel('Brain area')
     plt.ylabel('Brain area')
-    heat_map.set_yticklabels(heat_map.get_yticklabels(), rotation=0, fontsize=14)
-    heat_map.set_xticklabels(heat_map.get_xticklabels(), rotation=90, fontsize=14)
+    heat_map.set_yticklabels(heat_map.get_yticklabels(), rotation=0, fontsize=10)
+    heat_map.set_xticklabels(heat_map.get_xticklabels(), rotation=90, fontsize=10)
 
     plt.savefig(os.path.join(output_path, 'Area_correlation_heatmap_averaged.png'))
-    # plt.show()
+    #plt.show()
 
 
 def plot_averaged_dfc_clustermap(data, output_path):
@@ -72,13 +73,13 @@ def plot_averaged_dfc_clustermap(data, output_path):
     """
     # cmap = sns.diverging_palette(250, 15, as_cmap=True, center="dark")
     c_map = sns.clustermap(data, cmap='RdYlGn', yticklabels=True,
-                           xticklabels=True)
+                           xticklabels=True, figsize=(20, 20))
     plt.xlabel('Brain area')
     plt.ylabel('Brain area')
 
     plt.savefig(
         os.path.join(output_path, 'Averaged_dfc_clustered.png'))
-    # plt.show()
+    #plt.show()
 
 
 def plot_hidden_states(hidden_states, n_components, markov_array, output_path):

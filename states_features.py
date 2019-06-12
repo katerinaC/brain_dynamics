@@ -57,7 +57,7 @@ def mean_lifetime_of_state(clusters, n_clusters, output_path):
     :rtype: dict
     """
     # Feature of the data: Repetition time in seconds
-    TR = 2.00
+    TR = 0.72
     dict_lt = {}
     logging.basicConfig(
         filename=os.path.join(output_path, 'mean_lifetime_of_states.log'),

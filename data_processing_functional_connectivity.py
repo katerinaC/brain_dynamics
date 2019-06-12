@@ -13,6 +13,7 @@ import os
 
 import numpy as np
 import pylab
+from numpy.linalg import linalg
 from scipy import signal
 from sklearn import manifold, preprocessing
 from sklearn.decomposition import PCA
@@ -39,13 +40,13 @@ def convert_to_phases(input_path, output_path, brain_areas, t_phases, subject):
     :rtype: np.ndarray
     """
     phases = np.full((brain_areas, t_phases), fill_value=0).astype(np.float64)
-    array = np.genfromtxt(input_path, delimiter=',')
+    array = np.genfromtxt(input_path, delimiter=';')
     for area in tqdm(range(0, brain_areas)):
         # select by columns, transform to phase
         time_series = pylab.demean(signal.detrend(array[:, area]))
         filtered_ts = filter_signal(time_series)
         phases[area, :] = np.angle(signal.hilbert(filtered_ts))
-    np.savez(os.path.join(output_path, 'phases_{}'.format(subject)), phases)
+    np.savez_compressed(os.path.join(output_path, 'phases_{}'.format(subject)), phases)
     return phases
 
 
@@ -111,7 +112,7 @@ def dynamic_functional_connectivity(paths, output_path, brain_areas,
                                                        phases[z, t]))
             dfc_output = os.path.join(output_path, 'dFC')
             create_dir(dfc_output)
-            np.savez(os.path.join(dfc_output, 'subject_{}_time_{}'.format(n, t)), dFC)
+            np.savez_compressed(os.path.join(dfc_output, 'subject_{}_time_{}'.format(n, t)), dFC)
 
     return dfc_output
 
@@ -173,8 +174,53 @@ def preform_pca_on_dynamic_connectivity(paths, output_path, brain_areas,
             pca_components[n, t, :] = \
                 pca_dict['components'][0] + pca_dict['components'][1]
     # save the PCA matrix into a .npz file
-    np.savez(os.path.join(output_path, 'components_matrix'), pca_components)
+    np.savez_compressed(os.path.join(output_path, 'components_matrix'), pca_components)
     return pca_components, pca_components.shape
+
+
+def preform_lead_eig_on_dynamic_connectivity(paths, output_path, brain_areas,
+                                            pattern, t_phases, n_subjects):
+    """
+    Computes the dynamic connectivity of brain areas with leading eigenvectors.
+
+    :param paths: list of paths in input dir
+    :type paths: []
+    :param output_path: path to output directory
+    :type output_path: str
+    :param brain_areas: number of brain areas
+    :type brain_areas: int
+    :param pattern: pattern of input files
+    :type pattern: str
+    :param t_phases: number of time points
+    :type t_phases: int
+    :param n_subjects: number of subjects
+    :type n_subjects:int
+    :return: leading eigenvectors matrix, leading eigenvectors matrix shape
+    :rtype: np.ndarray, tuple
+    """
+    dFC = np.full((brain_areas, brain_areas), fill_value=0).astype(np.float64)
+    l_eigs = np.full((n_subjects, t_phases, brain_areas),
+                             fill_value=0).astype(np.float64)
+    for n in tqdm(range(n_subjects)):
+        phases = convert_to_phases(paths[n], output_path, brain_areas, t_phases, n)
+        for t in range(0, t_phases):
+            for i in range(0, brain_areas):
+                for z in range(0, brain_areas):
+                    if np.absolute(phases[i, t] - phases[z, t]) > np.pi:
+                        dFC[i, z] = np.cos(2 * np.pi - np.absolute(
+                            phases[i, t] - phases[z, t]))
+                    else:
+                        dFC[i, z] = np.cos(np.absolute(phases[i, t] -
+                                                       phases[z, t]))
+            dfc_output = os.path.join(output_path, 'dFC')
+            create_dir(dfc_output)
+            np.savez(os.path.join(dfc_output, 'subject_{}_time_{}'.format(n, t)), dFC)
+            eigen_vals, eigen_vects = linalg.eig(dFC)
+            leading_eig = eigen_vects[:, eigen_vals.argmax()]
+            l_eigs[n, t, :] = leading_eig
+    # save the PCA matrix into a .npz file
+    np.savez_compressed(os.path.join(output_path, 'components_matrix'), l_eigs)
+    return l_eigs, l_eigs.shape
 
 
 def preform_lle_on_dynamic_connectivity(paths, output_path, brain_areas,
@@ -223,7 +269,7 @@ def preform_lle_on_dynamic_connectivity(paths, output_path, brain_areas,
                 json.dump(err, output)
             lle_components[n, t, :] = np.squeeze(lle.flatten())
     # save the LLE matrix into a .npz file
-    np.savez(os.path.join(output_path, 'components_matrix'), lle_components)
+    np.savez_compressed(os.path.join(output_path, 'components_matrix'), lle_components)
     return lle_components, lle_components.shape
 
 
@@ -250,5 +296,5 @@ def functional_connectivity_dynamics(reduced_components, output_path):
                 # cosine similarity
                 FCD[subject, t1, t2] = np.dot(vec_1, vec_2) / (np.linalg.norm(
                     vec_1) * np.linalg.norm(vec_2))
-    np.savez(os.path.join(output_path, 'FCD_matrix'), FCD)
+    np.savez_compressed(os.path.join(output_path, 'FCD_matrix'), FCD)
     return FCD

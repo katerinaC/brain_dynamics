@@ -17,7 +17,8 @@ from sklearn.cluster import KMeans
 
 from data_processing_functional_connectivity import \
     preform_lle_on_dynamic_connectivity, preform_pca_on_dynamic_connectivity, \
-    functional_connectivity_dynamics, dynamic_functional_connectivity
+    functional_connectivity_dynamics, dynamic_functional_connectivity, \
+    preform_lead_eig_on_dynamic_connectivity
 from modeling_FC_states import kmeans_clustering, kmeans_clustering_mean_score, \
     dbscan, autoencoder
 from utilities import convert_components, \
@@ -50,6 +51,9 @@ def parse_args():
     parser.add_argument('--lle', action='store_true', default=False,
                         help='Perform Locally Linear Embedding data dimension '
                              'reduction', required=False)
+    parser.add_argument('--lead_eig', action='store_true', default=False,
+                        help='Get leading eigenvector as dim. reduction',
+                        required=False)
     parser.add_argument('--autoen', action='store_true', default=False,
                         help='Perform autoencoder data dimension reduction', required=False)
     parser.add_argument('--clusters', type=int, default=None,
@@ -73,6 +77,7 @@ def main():
     brain_areas = args.areas
     pca = args.pca
     lle = args.lle
+    lead_eig = args.lead_eig
     n_clusters = args.clusters
     t_phases = args.phases
     db = args.db
@@ -90,7 +95,7 @@ def main():
         name = os.path.basename(input_path)
         paths_list = return_paths_list(input_path, output_path, pattern=pattern)
         n_subjects = len(paths_list)
-        array = np.genfromtxt(paths_list[0], delimiter=',')
+        array = np.genfromtxt(paths_list[0], delimiter=';')
         t_phases = array.shape[0]
         dict.update({name: [n_subjects, t_phases]})
         new_output = create_new_output_path(input_path, output_path)
@@ -106,6 +111,13 @@ def main():
 
         if lle:
             components, shape = preform_lle_on_dynamic_connectivity(
+                paths_list, new_output, brain_areas, pattern, t_phases, n_subjects)
+            fcd_matrix = functional_connectivity_dynamics(components,
+                                                          new_output)
+            plot_functional_connectivity_matrix(fcd_matrix, output_path)
+
+        if lead_eig:
+            components, shape = preform_lead_eig_on_dynamic_connectivity(
                 paths_list, new_output, brain_areas, pattern, t_phases, n_subjects)
             fcd_matrix = functional_connectivity_dynamics(components,
                                                           new_output)

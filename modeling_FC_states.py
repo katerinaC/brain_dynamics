@@ -76,7 +76,7 @@ def kmeans_clustering(reduced_components, output_path):
         n_clusters[index_of_best]))
     best_clusterer = KMeans(n_clusters=n_clusters[index_of_best])
     clusters_array = best_clusterer.fit_predict(reduced_components_2d)
-    np.savez(os.path.join(output_path, 'clustered_matrix'), clusters_array)
+    np.savez_compressed(os.path.join(output_path, 'clustered_matrix'), clusters_array)
     probability_of_state(clusters_array, n_clusters[index_of_best], output_path)
     mean_lifetime_of_state(clusters_array, n_clusters[index_of_best], output_path)
     data_clusters = {'reduced_components': reduced_components_2d, 'clusters': clusters_array}
@@ -127,7 +127,7 @@ def kmeans_clustering_mean_score(reduced_components, output_path, n_clusters):
                              sample_silhouette_values, clusters_array, cluster_center)
     clusters_array = np.expand_dims(clusters_array, axis=1)
     data_clusters = np.hstack((reduced_components, clusters_array))
-    np.savez(os.path.join(output_path, 'concatentated_matrix_clusters'),
+    np.savez_compressed(os.path.join(output_path, 'concatentated_matrix_clusters'),
              data_clusters)
     return clusters_array, data_clusters
 
@@ -168,7 +168,7 @@ def hidden_markov_model(reduced_components, output_path):
     hidden_states = best_hmm.predict(reduced_components_2d)
     np.savez(os.path.join(output_path, 'HMM_state_sequence'), hidden_states)
     predict_proba = best_hmm.predict_proba(reduced_components_2d)
-    np.savez(os.path.join(output_path, 'HMM_posteriors'), predict_proba)
+    np.savez_compressed(os.path.join(output_path, 'HMM_posteriors'), predict_proba)
     hidden_states_expanded = np.expand_dims(hidden_states, axis=1)
     markov_array = np.append(reduced_components_2d, hidden_states_expanded, axis=1)
     return hidden_states, predict_proba, n_components[index_of_best], \
@@ -226,7 +226,7 @@ def kmeans_clustering_missing(reduced_components, output_path,
                      'sum of squared distances of samples to their closest '
                      'cluster center are: {}'.format(n_clusters, centroids,
                                                      cls.inertia_))
-    np.savez(os.path.join(output_path, 'clustered_matrix'), labels)
+    np.savez_compressed(os.path.join(output_path, 'clustered_matrix'), labels)
     return labels, centroids, X_filled
 
 
@@ -264,7 +264,7 @@ def dbscan(reduced_components, output_path):
                              sample_silhouette_values, labels, dbscan.components_)
     clusters_array = np.expand_dims(labels, axis=1)
     data_clusters = np.hstack((reduced_components, clusters_array))
-    np.savez(os.path.join(output_path, 'concatentated_matrix_clusters'),
+    np.savez_compressed(os.path.join(output_path, 'concatentated_matrix_clusters'),
              data_clusters)
     return labels, data_clusters
 
@@ -339,9 +339,9 @@ def autoencoder(dfc_all, output_path, y, imbalanced):
 
     encoder = Model(m.input, m.get_layer('bottleneck').output)
     Zenc = encoder.predict(predict_data)  # bottleneck representation
-    np.savez(os.path.join(output_path, 'encoder_{}_features'.format(all_ft_1)), Zenc)
+    np.savez_compressed(os.path.join(output_path, 'encoder_{}_features'.format(all_ft_1)), Zenc)
     Renc = m.predict(predict_data)  # reconstruction
-    np.savez(os.path.join(output_path, 'autoencoder_reconstruction'), Renc)
+    np.savez_compressed(os.path.join(output_path, 'autoencoder_reconstruction'), Renc)
     logging.info('MSE:{}, Val loss:{}'.format(history.history['loss'],
                                               history.history['val_loss']))
     plot_val_los_autoe(history.history['val_loss'], history.history['loss'],
@@ -383,7 +383,7 @@ def gaussian_mixture(reduced_components, output_path, n_clusters):
                              sample_silhouette_values, labels, gmm.means_)
     clusters_array = np.expand_dims(labels, axis=1)
     data_clusters = np.hstack((reduced_components, clusters_array))
-    np.savez(os.path.join(output_path, 'concatentated_matrix_clusters'),
+    np.savez_compressed(os.path.join(output_path, 'concatentated_matrix_clusters'),
              data_clusters)
     return labels, data_clusters
 
@@ -423,6 +423,6 @@ def ward_clustering(reduced_components, output_path, n_clusters):
                              sample_silhouette_values, labels, ward.children_)
     clusters_array = np.expand_dims(labels, axis=1)
     data_clusters = np.hstack((reduced_components, clusters_array))
-    np.savez(os.path.join(output_path, 'concatentated_matrix_clusters'),
+    np.savez_compressed(os.path.join(output_path, 'concatentated_matrix_clusters'),
              data_clusters)
     return labels, data_clusters

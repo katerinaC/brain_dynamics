@@ -147,7 +147,7 @@ def convert_components(input_path, output_path):
         dict.update({os.path.basename(os.path.dirname(path)): (start[input_path.index(path)],
                                               start[input_path.index(path)]+rows)})
         start.append((rows + start[input_path.index(path)]))
-    np.savez(os.path.join(output_path,
+    np.savez_compressed(os.path.join(output_path,
                           'concatenated_reduced_components'), array)
     with open(os.path.join(output_path, 'arrays_starts.json'), 'w') as fp:
         json.dump(dict, fp)
@@ -236,7 +236,7 @@ def separate_concat_array(input_path, starts_json, output_path, n_clusters):
                               'splitted_matrix_clusters.npz')
         output_paths.append(output)
         create_dir(os.path.join(output_path, starts.keys()[n]))
-        np.savez(output, new_array)
+        np.savez_compressed(output, new_array)
     return output_paths
 
 
@@ -271,10 +271,13 @@ def preprocess_autoencoder(input_paths, output_path, brain_areas):
     with open(os.path.join(output_path, 'arrays_starts.json'), 'w') as fp:
         json.dump(dict, fp)
     n_samples = len(all_paths)
-    dfc_all = np.full((n_samples, brain_areas, brain_areas),
-                      fill_value=0).astype(np.float64)
+    #dfc_all = np.full((n_samples, brain_areas, brain_areas), fill_value=0).astype(np.float64)
+    dfc_all = np.memmap('merged.buffer', dtype=np.float64, mode='w+',
+                       shape=(n_samples, brain_areas, brain_areas))
+
     for p in tqdm(all_paths):
         dfc = np.load(p)['arr_0']
         dfc_all[all_paths.index(p), :, :] = dfc
-    np.savez(os.path.join(output_path, 'dfc_all'), dfc_all)
+
+    #np.savez_compressed(os.path.join(output_path, 'dfc_all'), dfc_all)
     return dfc_all, n_samples, y
