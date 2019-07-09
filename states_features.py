@@ -43,7 +43,7 @@ def probability_of_state(clusters, n_clusters, output_path):
     return dict_p
 
 
-def mean_lifetime_of_state(clusters, n_clusters, output_path):
+def mean_lifetime_of_state(clusters, n_clusters, output_path, TR):
     """
     Computes the mean lifetime of a state.
 
@@ -53,11 +53,11 @@ def mean_lifetime_of_state(clusters, n_clusters, output_path):
     :type n_clusters: int
     :param output_path: path to output directory
     :type output_path: str
+    :param TR: imaging repetition time in seconds
+    :type TR: int
     :return: dictinory {state: mean lifetime}
     :rtype: dict
     """
-    # Feature of the data: Repetition time in seconds
-    TR = 0.72
     dict_lt = {}
     logging.basicConfig(
         filename=os.path.join(output_path, 'mean_lifetime_of_states.log'),
@@ -169,7 +169,7 @@ def p_value_stars(p_value):
         return "-"
 
 
-def distribution_probability_lifetime(clusters, output_path, n_clusters):
+def distribution_probability_lifetime(clusters, output_path, n_clusters, TR):
     """
     Creates a distribution of probabilities and life times of states
 
@@ -179,12 +179,14 @@ def distribution_probability_lifetime(clusters, output_path, n_clusters):
     :type output_path: str
     :param n_clusters: number of clusters
     :type n_clusters: int
+    :param TR: imaging repetition time in seconds
+    :type TR: int
     :return: proba_list:array of probabilities, lifetimes_list: array of lifetimes,
     df: dataframe
     :rtype: np.ndarray, np.ndarray, pd.DataFrame
     """
     probas = probability_of_state(clusters, n_clusters, output_path)
-    lifetimes = mean_lifetime_of_state(clusters, n_clusters, output_path)
+    lifetimes = mean_lifetime_of_state(clusters, n_clusters, output_path, TR)
     proba_list = []
     lifetimes_list = []
     for elem in clusters:

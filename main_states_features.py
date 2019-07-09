@@ -51,6 +51,8 @@ def parse_args():
                         required=False)
     parser.add_argument('--clusters', type=str,
                         help='Path to clusters file clustered_matrix', required=True)
+    parser.add_argument('--tr', type=int,
+                        help='TR of imaging method', required=True)
     return parser.parse_args()
 
 
@@ -66,13 +68,14 @@ def main():
     starts_json = args.starts
     clusters = args.clusters
     sub_t = args.sub_t
+    TR = args.tr
 
     create_dir(output_path)
     reduced_components = np.load(input_path)['arr_0'][:, :-1]
     variance = variance_of_states(reduced_components, output_path)
     labels = np.load(clusters)['arr_0']
     plot_variance(labels, variance, output_path)
-    probabilities, lifets, df_prob = distribution_probability_lifetime(labels, output_path, n_clusters)
+    probabilities, lifets, df_prob = distribution_probability_lifetime(labels, output_path, n_clusters, TR)
     for i in range(n_clusters):
         probs = df_prob[df_prob['clusters'] == i]
         entropy_of_states(probs['probabilities'], output_path, i)
@@ -115,7 +118,7 @@ def main():
                 a_proba_list = [proba_a[i] for i in group_a[s_a, :]]
                 a_probas.extend(a_proba_list)
                 lt_a = mean_lifetime_of_state(group_a[s_a, :], n_clusters,
-                                              output)
+                                              output, TR)
                 a_lt_list = [lt_a[i] for i in group_a[s_a, :]]
                 a_lt.extend(a_lt_list)
 
@@ -125,7 +128,7 @@ def main():
                 b_proba_list = [proba_b[i] for i in group_b[s_b, :]]
                 b_probas.extend(b_proba_list)
                 lt_b = mean_lifetime_of_state(group_b[s_b, :], n_clusters,
-                                              output)
+                                              output, TR)
                 b_lt_list = [lt_b[i] for i in group_b[s_b, :]]
                 b_lt.extend(b_lt_list)
 

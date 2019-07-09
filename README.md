@@ -57,11 +57,7 @@ Data should be stored either in `.csv` or `.mat` file formats. For each subject
 there should be a separate file (time x brain areas).
 
 ### Notes
-
-Two parameters are in the code as they are usually the same, however, check for
-for number of components in dim. reduction and TR in mean
-lifetime of states (default 2 for both).
-Check for delimiter when input in .csv format
+Check for the number of components in dim. reduction.
 
 Also, if running for different data sets, check the number of brain areas. Ideally,
 the number of brain areas and the brain areas themselves should correspond.

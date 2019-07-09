@@ -46,6 +46,8 @@ def parse_args():
                         help='Number of brain areas', required=True)
     parser.add_argument('--phases', type=int,
                         help='Number of time phases', required=False)
+    parser.add_argument('--tr', type=int,
+                        help='TR of imaging method', required=True)
     parser.add_argument('--pca', action='store_true', default=False,
                         help='Perform PCA data dimension reduction', required=False)
     parser.add_argument('--lle', action='store_true', default=False,
@@ -83,6 +85,7 @@ def main():
     db = args.db
     autoen = args.autoen
     imbalanced = args.imb
+    TR = args.tr
 
     create_dir(output_path)
 
@@ -105,27 +108,27 @@ def main():
 
         if pca:
             components, shape = preform_pca_on_dynamic_connectivity(
-                paths_list, new_output, brain_areas, pattern, t_phases, n_subjects)
+                paths_list, new_output, brain_areas, pattern, t_phases, n_subjects, TR)
             fcd_matrix = functional_connectivity_dynamics(components, new_output)
             plot_functional_connectivity_matrix(fcd_matrix, new_output)
 
         if lle:
             components, shape = preform_lle_on_dynamic_connectivity(
-                paths_list, new_output, brain_areas, pattern, t_phases, n_subjects)
+                paths_list, new_output, brain_areas, pattern, t_phases, n_subjects, TR)
             fcd_matrix = functional_connectivity_dynamics(components,
                                                           new_output)
             plot_functional_connectivity_matrix(fcd_matrix, output_path)
 
         if lead_eig:
             components, shape = preform_lead_eig_on_dynamic_connectivity(
-                paths_list, new_output, brain_areas, pattern, t_phases, n_subjects)
+                paths_list, new_output, brain_areas, pattern, t_phases, n_subjects, TR)
             fcd_matrix = functional_connectivity_dynamics(components,
                                                           new_output)
             plot_functional_connectivity_matrix(fcd_matrix, output_path)
 
         if autoen:
             dfc_path = dynamic_functional_connectivity(
-                paths_list, new_output, brain_areas, pattern, t_phases, n_subjects)
+                paths_list, new_output, brain_areas, pattern, t_phases, n_subjects, TR)
             dfc_paths.append(dfc_path)
 
     if autoen:

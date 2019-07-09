@@ -281,3 +281,18 @@ def preprocess_autoencoder(input_paths, output_path, brain_areas):
 
     #np.savez_compressed(os.path.join(output_path, 'dfc_all'), dfc_all)
     return dfc_all, n_samples, y
+
+
+def find_delimeter(input_path):
+    """
+    Finds a .csv file delimeter
+
+    :param input_path: path to a .csv file
+    :type input_path: str
+    """
+    with open(input_path, 'r') as myCsvfile:
+        header = myCsvfile.readline()
+        if header.find(';') != -1:
+            return ';'
+        if header.find(',') != -1:
+            return ','

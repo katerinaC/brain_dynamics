@@ -19,10 +19,10 @@ from sklearn import manifold, preprocessing
 from sklearn.decomposition import PCA
 from tqdm import tqdm
 
-from utilities import return_paths_list, create_dir
+from utilities import return_paths_list, create_dir, find_delimeter
 
 
-def convert_to_phases(input_path, output_path, brain_areas, t_phases, subject):
+def convert_to_phases(input_path, output_path, brain_areas, t_phases, subject, TR):
     """
     Converts BOLD signal into phases by Hilbert Transform with filtering included.
 
@@ -36,21 +36,24 @@ def convert_to_phases(input_path, output_path, brain_areas, t_phases, subject):
     :type t_phases: int
     :param subject: subject number
     :type subject: int
+    :param TR: repetition time
+    :type TR: int
     :return: phases matrix
     :rtype: np.ndarray
     """
     phases = np.full((brain_areas, t_phases), fill_value=0).astype(np.float64)
-    array = np.genfromtxt(input_path, delimiter=';')
+    delim = find_delimeter(input_path)
+    array = np.genfromtxt(input_path, delimiter=delim)
     for area in tqdm(range(0, brain_areas)):
         # select by columns, transform to phase
         time_series = pylab.demean(signal.detrend(array[:, area]))
-        filtered_ts = filter_signal(time_series)
+        filtered_ts = filter_signal(time_series, TR)
         phases[area, :] = np.angle(signal.hilbert(filtered_ts))
     np.savez_compressed(os.path.join(output_path, 'phases_{}'.format(subject)), phases)
     return phases
 
 
-def filter_signal(time_series, TR=2.0):
+def filter_signal(time_series, TR):
     """
     Performs bandpass filtering of BOLD signal data.
 
@@ -78,7 +81,7 @@ def filter_signal(time_series, TR=2.0):
 
 
 def dynamic_functional_connectivity(paths, output_path, brain_areas,
-                                    pattern, t_phases, n_subjects):
+                                    pattern, t_phases, n_subjects, TR):
     """
     Computes the dynamic functional connectivity of brain areas.
 
@@ -94,13 +97,15 @@ def dynamic_functional_connectivity(paths, output_path, brain_areas,
     :type t_phases: int
     :param n_subjects: number of subjects
     :type n_subjects:int
+    :param TR: repetition time
+    :type TR: int
     :return: dFC output path
     :rtype: str
     """
     dFC = np.full((brain_areas, brain_areas), fill_value=0).astype(np.float64)
 
     for n in tqdm(range(n_subjects)):
-        phases = convert_to_phases(paths[n], output_path, brain_areas, t_phases, n)
+        phases = convert_to_phases(paths[n], output_path, brain_areas, t_phases, n, TR)
         for t in range(0, t_phases):
             for i in range(0, brain_areas):
                 for z in range(0, brain_areas):
@@ -118,7 +123,7 @@ def dynamic_functional_connectivity(paths, output_path, brain_areas,
 
 
 def preform_pca_on_dynamic_connectivity(paths, output_path, brain_areas,
-                                        pattern, t_phases, n_subjects):
+                                        pattern, t_phases, n_subjects, TR):
     """
     Computes the dynamic connectivity of brain areas with performing
     a PCA returning its matrix.
@@ -135,6 +140,8 @@ def preform_pca_on_dynamic_connectivity(paths, output_path, brain_areas,
     :type t_phases: int
     :param n_subjects: number of subjects
     :type n_subjects:int
+    :param TR: repetition time
+    :type TR: int
     :return: PCA matrix, PCA matrix shape
     :rtype: np.ndarray, tuple
     """
@@ -142,7 +149,7 @@ def preform_pca_on_dynamic_connectivity(paths, output_path, brain_areas,
     pca_components = np.full((n_subjects, t_phases, (brain_areas * 2)),
                              fill_value=0).astype(np.float64)
     for n in tqdm(range(n_subjects)):
-        phases = convert_to_phases(paths[n], output_path, brain_areas, t_phases, n)
+        phases = convert_to_phases(paths[n], output_path, brain_areas, t_phases, n, TR)
         for t in range(0, t_phases):
             for i in range(0, brain_areas):
                 for z in range(0, brain_areas):
@@ -179,7 +186,7 @@ def preform_pca_on_dynamic_connectivity(paths, output_path, brain_areas,
 
 
 def preform_lead_eig_on_dynamic_connectivity(paths, output_path, brain_areas,
-                                            pattern, t_phases, n_subjects):
+                                            pattern, t_phases, n_subjects, TR):
     """
     Computes the dynamic connectivity of brain areas with leading eigenvectors.
 
@@ -195,6 +202,8 @@ def preform_lead_eig_on_dynamic_connectivity(paths, output_path, brain_areas,
     :type t_phases: int
     :param n_subjects: number of subjects
     :type n_subjects:int
+    :param TR: repetition time
+    :type TR: int
     :return: leading eigenvectors matrix, leading eigenvectors matrix shape
     :rtype: np.ndarray, tuple
     """
@@ -202,7 +211,7 @@ def preform_lead_eig_on_dynamic_connectivity(paths, output_path, brain_areas,
     l_eigs = np.full((n_subjects, t_phases, brain_areas),
                              fill_value=0).astype(np.float64)
     for n in tqdm(range(n_subjects)):
-        phases = convert_to_phases(paths[n], output_path, brain_areas, t_phases, n)
+        phases = convert_to_phases(paths[n], output_path, brain_areas, t_phases, n, TR)
         for t in range(0, t_phases):
             for i in range(0, brain_areas):
                 for z in range(0, brain_areas):
@@ -224,7 +233,7 @@ def preform_lead_eig_on_dynamic_connectivity(paths, output_path, brain_areas,
 
 
 def preform_lle_on_dynamic_connectivity(paths, output_path, brain_areas,
-                                        pattern, t_phases, n_subjects):
+                                        pattern, t_phases, n_subjects, TR):
     """
     Computes the dynamic connectivity of brain areas with performing
     a locally linear embedding returning its matrix.
@@ -241,6 +250,8 @@ def preform_lle_on_dynamic_connectivity(paths, output_path, brain_areas,
     :type t_phases: int
     :param n_subjects: number of subjects
     :type n_subjects:int
+    :param TR: repetition time
+    :type TR: int
     :return: LLE matrix, LLE matrix shape
     :rtype: np.ndarray, tuple
     """
@@ -248,7 +259,7 @@ def preform_lle_on_dynamic_connectivity(paths, output_path, brain_areas,
     lle_components = np.full((n_subjects, t_phases, (brain_areas * 2)),
                              fill_value=0).astype(np.float64)
     for n in tqdm(range(0, n_subjects)):
-        phases = convert_to_phases(paths[n], output_path, brain_areas, t_phases, n)
+        phases = convert_to_phases(paths[n], output_path, brain_areas, t_phases, n, TR)
         for t in range(0, t_phases):
             for i in range(0, brain_areas):
                 for z in range(0, brain_areas):
