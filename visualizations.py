@@ -428,3 +428,74 @@ def plot_see_against_n_clusters(list_k, sse, silhouette, output_path):
     ax1.set_ylabel('Sum of squared distance')
     ax2.set_ylabel('Silhouette score')
     plt.savefig(os.path.join(output_path, 'sse_sil_n_clusters.png'))
+
+
+def plot_kl_distance(kl_matrix, conditions, output_path, measure):
+    """
+    Plots the heatmap of a divergence
+
+    :param kl_matrix: KL divergence matrix
+    :type kl_matrix: np.ndarray
+    :param conditions: conditions for the axes
+    :type conditions: []
+    :param output_path: path to output directory
+    :type output_path: str
+    :param measure: type of distance
+    :type measure: str
+    """
+    fig, ax = plt.subplots(figsize=(10, 8))
+    fig.subplots_adjust(bottom=0.3)
+    mask = np.zeros_like(kl_matrix, dtype=np.bool)
+    mask[np.diag_indices_from(mask)] = True
+    heat_map = sns.heatmap(data=kl_matrix, cmap= 'coolwarm', annot=True,
+                           square=True, linewidths=2, linecolor='white',
+                           xticklabels=conditions, yticklabels=conditions,
+                           mask=mask)
+
+    heat_map.set_yticklabels(heat_map.get_yticklabels(), rotation=0, fontsize=14)
+    heat_map.set_xticklabels(heat_map.get_xticklabels(), rotation=90, fontsize=14)
+
+    plt.savefig(os.path.join(output_path, '{}_matrix_heatmap.png'.format(measure)))
+
+
+def plot_ent_boxplot(df_ent, output_path):
+    """
+    Plots the boxplot of entropies for conditions
+
+    :param df_ent: entropies dataframe
+    :type df_ent: pd.DataFrame
+    :param output_path: path to output directory
+    :type output_path: str
+    """
+    fig, ax = plt.subplots(figsize=(14, 7))
+    fig.tight_layout()
+    ax = sns.boxplot(x="Condition", y="Entropy(H)", data=df_ent)
+    ax.set_yticklabels(ax.get_yticklabels(), rotation=0,
+                             fontsize=13)
+    ax.set_xticklabels(ax.get_xticklabels(), rotation=0,
+                             fontsize=13)
+    plt.savefig(os.path.join(output_path, 'Entropy_boxplot.png'))
+
+
+def plot_transition_matrix(trans_m, condition, output_path):
+    """
+    Plots the transition matrix
+
+    :param trans_m: transition matrix
+    :type trans_m: []
+    :param condition: condition
+    :type condition: str
+    :param output_path: path to output directory
+    :type output_path: str
+    """
+    n_states = len(trans_m[0])
+    sns.set_style("ticks", {"xtick.major.size": 17, "ytick.major.size": 17})
+    sns.set_context("talk")
+    fig, ax = plt.subplots(1)
+    ax = sns.heatmap(trans_m, annot=True, cmap='coolwarm', annot_kws={"size": 17},
+                     xticklabels = [i + 1 for i in range(n_states)], yticklabels =  [i + 1 for i in range(n_states)],
+                     vmin=0, vmax=0.20, center=0.10)
+    cbar = ax.collections[0].colorbar
+    # here set the labelsize by 20
+    cbar.ax.tick_params(labelsize=17)
+    plt.savefig(os.path.join(output_path, 'transition_matrix_{}_{}.png'.format(n_states, condition)))

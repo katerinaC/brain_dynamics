@@ -296,3 +296,30 @@ def find_delimeter(input_path):
             return ';'
         if header.find(',') != -1:
             return ','
+
+
+class SymNDArray(np.ndarray):
+    def __setitem__(self, (i, j), value):
+        super(SymNDArray, self).__setitem__((i, j), value)
+        super(SymNDArray, self).__setitem__((j, i), value)
+
+
+def symmetrize(array):
+    """
+    Symmetrize an array
+    :param array: array to symmetrize
+    :return: symmetrized np.ndarray
+    :rtype: np.ndarray
+    """
+    return array + array.T - np.diag(array.diagonal())
+
+
+def symarray(input_array):
+    """
+    Returns a symmetrized version of the array-like input_array.
+    Further assignments to the array are automatically symmetrized.
+
+    :param input_array: array as an input
+    :type input_array: np.ndarray
+    """
+    return symmetrize(np.asarray(input_array)).view(SymNDArray)

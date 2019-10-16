@@ -46,7 +46,7 @@ def parse_args():
                         help='Number of brain areas', required=True)
     parser.add_argument('--phases', type=int,
                         help='Number of time phases', required=False)
-    parser.add_argument('--tr', type=int,
+    parser.add_argument('--tr', type=float,
                         help='TR of imaging method', required=True)
     parser.add_argument('--pca', action='store_true', default=False,
                         help='Perform PCA data dimension reduction', required=False)
@@ -139,10 +139,10 @@ def main():
     if n_clusters is not None and autoen is False:
         # concatenate all data
         concatenated = convert_components(output_paths, output_path)
-        kmeans_clustering_mean_score(concatenated, output_path, n_clusters)
+        kmeans_clustering_mean_score(concatenated, output_path, n_clusters, TR)
 
     elif n_clusters is not None and autoen is True:
-        kmeans_clustering_mean_score(encoded, output_path, n_clusters)
+        kmeans_clustering_mean_score(encoded, output_path, n_clusters, TR)
         sse = []
         silhouette = []
         list_k = list(range(2, 20))

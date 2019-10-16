@@ -83,7 +83,7 @@ def kmeans_clustering(reduced_components, output_path):
     return clusters_array
 
 
-def kmeans_clustering_mean_score(reduced_components, output_path, n_clusters):
+def kmeans_clustering_mean_score(reduced_components, output_path, n_clusters, TR):
     """
     Performs a K-means clustering with pre-set number of clusters more times and
     returns the average silhouette score
@@ -94,6 +94,8 @@ def kmeans_clustering_mean_score(reduced_components, output_path, n_clusters):
     :type output_path: str
     :param n_clusters: number of clusters
     :type n_clusters: int
+    :param TR: time repetition
+    :type TR: int
     :return: clustered array, features array with labels
     :rtype: np.ndarray, np.ndarray
     """
@@ -122,7 +124,7 @@ def kmeans_clustering_mean_score(reduced_components, output_path, n_clusters):
     logging.info('The average silhouette score: {}'.format(avg_silhouette))
     np.savez(os.path.join(output_path, 'clustered_matrix'), clusters_array)
     probability_of_state(clusters_array, n_clusters, output_path)
-    mean_lifetime_of_state(clusters_array, n_clusters, output_path)
+    mean_lifetime_of_state(clusters_array, n_clusters, output_path, TR)
     plot_silhouette_analysis(reduced_components, output_path, n_clusters, avg_silhouette,
                              sample_silhouette_values, clusters_array, cluster_center)
     clusters_array = np.expand_dims(clusters_array, axis=1)
@@ -341,7 +343,7 @@ def autoencoder(dfc_all, output_path, y, imbalanced):
     Zenc = encoder.predict(predict_data)  # bottleneck representation
     np.savez_compressed(os.path.join(output_path, 'encoder_{}_features'.format(all_ft_1)), Zenc)
     Renc = m.predict(predict_data)  # reconstruction
-    np.savez_compressed(os.path.join(output_path, 'autoencoder_reconstruction'), Renc)
+    #np.savez_compressed(os.path.join(output_path, 'autoencoder_reconstruction'), Renc)
     logging.info('MSE:{}, Val loss:{}'.format(history.history['loss'],
                                               history.history['val_loss']))
     plot_val_los_autoe(history.history['val_loss'], history.history['loss'],

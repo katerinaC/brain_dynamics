@@ -51,7 +51,7 @@ def parse_args():
                         required=False)
     parser.add_argument('--clusters', type=str,
                         help='Path to clusters file clustered_matrix', required=True)
-    parser.add_argument('--tr', type=int,
+    parser.add_argument('--tr', type=float,
                         help='TR of imaging method', required=True)
     return parser.parse_args()
 
@@ -112,6 +112,8 @@ def main():
             b_probas = []
             a_lt = []
             b_lt = []
+            subj_a = []
+            subj_b = []
 
             for s_a in range(s_t_a[0]):
                 proba_a = probability_of_state(group_a[s_a, :], n_clusters, output)
@@ -121,6 +123,7 @@ def main():
                                               output, TR)
                 a_lt_list = [lt_a[i] for i in group_a[s_a, :]]
                 a_lt.extend(a_lt_list)
+                subj_a.extend([s_a for i in range(len(a_lt_list))])
 
             for s_b in range(s_t_b[0]):
                 proba_b = probability_of_state(group_b[s_b, :], n_clusters,
@@ -131,14 +134,17 @@ def main():
                                               output, TR)
                 b_lt_list = [lt_b[i] for i in group_b[s_b, :]]
                 b_lt.extend(b_lt_list)
+                subj_b.extend([s_b for i in range(len(b_lt_list))])
 
-            cond_a = [a_name for i in range(len(a_labels))]
-            cond_b = [b_name for z in range(len(b_labels))]
-
+            cond_a = [a_name for i in range(len(a_probas))]
+            cond_b = [b_name for z in range(len(b_probas))]
+            a_lab_list = a_labels.tolist()
+            b_lab_list = b_labels.tolist()
             dict_prob = {'probability': a_probas + b_probas,
                          'lifetime': a_lt + b_lt,
                          'condition': cond_a + cond_b,
-                         'cluster': a_labels.tolist() + b_labels.tolist()}
+                         'cluster': a_lab_list[:len(a_probas)] + b_lab_list[:len(b_probas)],
+                         'subject': subj_a + subj_b}
             df = pd.DataFrame(data=dict_prob)
             df.to_csv(os.path.join(output, 'probas_lt_dataframe.csv'))
             plot_probabilities_barplots(df, output)

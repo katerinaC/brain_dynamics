@@ -11,6 +11,7 @@ import scipy
 import pandas as pd
 import numpy as np
 from permute.core import two_sample
+from scipy.spatial.distance import mahalanobis
 from scipy.stats import stats
 
 from utilities import create_dir
@@ -233,3 +234,84 @@ def entropy_of_states(probabilities, output_path, n_cluster):
             n_cluster)), 'w') as fp:
         json.dump(dict, fp)
     return entropy
+
+
+def kl_distance_symm(prob_a, prob_b):
+    """
+    Computes the Kullback-Leibler (KL) divergence and symmetrize it.
+
+    :param prob_a: array with probabilities of condition a
+    :type prob_a: pd.Series
+    :param prob_b: array with probabilities of condition b
+    :type prob_b: pd.Series
+    :return: kl divergence: calculated kl divergence symmetrized
+    :rtype: float
+    """
+    if not isinstance(prob_a, np.ndarray):
+        prob_a = np.array(prob_a.tolist())
+    if not isinstance(prob_b, np.ndarray):
+        prob_b = np.array(prob_b.tolist())
+    # Epsilon is used here to avoid conditional code for
+    # checking that neither P nor Q is equal to 0.
+    epsilon = 0.00001
+
+    P = prob_a + epsilon
+    Q = prob_b + epsilon
+
+    kl_ab = np.sum(P * np.log(P/Q))
+    kl_ba = np.sum(Q * np.log(Q/P))
+
+    return (kl_ab + kl_ba) / 2
+
+
+def transition_matrix(states, condition, output_path):
+    """
+    Computes the transition matrix.
+
+    :param states: array with states
+    :type states: []
+    :param condition: condition
+    :type: str
+    :param output_path: path to output directory
+    :type output_path: str
+    :return: M: Markov transitions matrix
+    :rtype: []
+    """
+    n = 1 + max(states) # number of states
+    M = [[0]*n for _ in range(n)]
+
+    for (i,j) in zip(states, states[1:]):
+        M[i][j] += 1
+
+    # now convert to probabilities:
+    for row in M:
+        s = sum(row)
+        s = float(s)
+        if s > 0:
+            row[:] = [round(f/s, 3) for f in row]
+    for i in M:
+        with open(os.path.join(output_path, 'transition_matrix_{}_{}.txt'.format(max(states), condition)),
+                  "a+") as text_file:
+            text_file.write(str(i))
+    return M
+
+
+def mahalanobis_dictance(array_a, array_b):
+    """
+    Computes the mahalanobis distance between two 1D arrays
+
+    :param array_a: array a
+    :type array_a: pd.Series
+    :param array_b: array b
+    :type array_b: pd.Series
+    :return: mahalanobis distance
+    :rtype: float
+    """
+    if not isinstance(array_a, np.ndarray):
+        array_a = np.array(array_a.tolist())
+    if not isinstance(array_b, np.ndarray):
+        array_b = np.array(array_b.tolist())
+    V = np.cov(np.array([array_a, array_b]).T)
+    IV = np.linalg.inv(V)
+
+    return mahalanobis(array_a, array_b, IV)
