@@ -28,6 +28,7 @@ from keras.models import Sequential, Model
 from keras.optimizers import Adam
 from sklearn import mixture, preprocessing
 from sklearn.cluster import KMeans, DBSCAN, AgglomerativeClustering
+from sklearn.externals import joblib
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import silhouette_score, silhouette_samples
 from sklearn.neighbors import kneighbors_graph
@@ -119,6 +120,9 @@ def kmeans_clustering_mean_score(reduced_components, output_path, n_clusters, TR
         clusters_array = kmeans.predict(reduced_components)
         sample_silhouette_values = silhouette_samples(reduced_components,
                                                       clusters_array)
+        # save the model to disk
+        filename = 'kmeans_model.sav'
+        joblib.dump(kmeans, filename)
     # average silhouette score
     avg_silhouette = sum(results)/float(len(results))
     logging.info('The average silhouette score: {}'.format(avg_silhouette))
@@ -348,6 +352,13 @@ def autoencoder(dfc_all, output_path, y, imbalanced):
                                               history.history['val_loss']))
     plot_val_los_autoe(history.history['val_loss'], history.history['loss'],
                        output_path)
+    encoder.save(os.path.join(output_path,'autoencoder_model.h5'))
+    # serialize model to JSON
+    model_json = encoder.to_json()
+    with open(os.path.join(output_path, 'autoencoder_architecture.json'), "w") as json_file:
+        json_file.write(model_json)
+    # serialize weights to HDF5
+    encoder.save_weights(os.path.join(output_path, 'autoencoder_weights.h5'))
     plot_autoe_vs_pca(Zpca, Zenc, output_path)
     return Zenc
 

@@ -92,6 +92,7 @@ def main():
 
     # plot distances
     plot_kl_distance(kl_matrix, conditions, output_path, 'kl')
+    np.savetxt(os.path.join(output_path, 'KL_divergence.txt'), kl_matrix, delimiter=', ')
     #plot_kl_distance(m_matrix, conditions, output_path, 'mahalanobis')
 
     # Entropies box plot for each condition
@@ -102,15 +103,19 @@ def main():
             df_ent_2 = df_ent_1[df_ent_1['subject'] == subject]
             subject_p = df_ent_2['Subject_probability'].tolist()
             entropy = scipy.stats.entropy(subject_p)
-            df_ent = df_ent.append({'Condition': condition, 'Entropy(H)': float(entropy)},
+            entropy = round(entropy, 4)
+            df_ent = df_ent.append({'Condition': condition, 'Entropy': float(entropy)},
                                ignore_index=True)
+
+    df_ent.to_csv(os.path.join(output_path, 'df_ent.csv'))
+
     p_ent_list = []
     conds = []
     for cond_a, cond_b in itertools.combinations(conditions, 2):
         df_ent_a = df_ent[df_ent['Condition'] == cond_a]
         df_ent_b = df_ent[df_ent['Condition'] == cond_b]
-        p_ent, t_ent = permutation_t_test(df_ent_a['Entropy(H)'].tolist(),
-                                            df_ent_b['Entropy(H)'].tolist(),
+        p_ent, t_ent = permutation_t_test(df_ent_a['Entropy'].tolist(),
+                                            df_ent_b['Entropy'].tolist(),
                                             os.path.join(output_path,
                                                          '{}_{}_t_test'.format(
                                                         str(cond_a), str(cond_b))))

@@ -469,7 +469,7 @@ def plot_ent_boxplot(df_ent, output_path):
     """
     fig, ax = plt.subplots(figsize=(14, 7))
     fig.tight_layout()
-    ax = sns.boxplot(x="Condition", y="Entropy(H)", data=df_ent)
+    ax = sns.boxplot(x="Condition", y="Entropy", data=df_ent)
     ax.set_yticklabels(ax.get_yticklabels(), rotation=0,
                              fontsize=13)
     ax.set_xticklabels(ax.get_xticklabels(), rotation=0,
