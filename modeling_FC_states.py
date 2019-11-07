@@ -122,7 +122,7 @@ def kmeans_clustering_mean_score(reduced_components, output_path, n_clusters, TR
                                                       clusters_array)
         # save the model to disk
         filename = 'kmeans_model.sav'
-        joblib.dump(kmeans, filename)
+        joblib.dump(os.path.join(silhouette, kmeans), filename)
     # average silhouette score
     avg_silhouette = sum(results)/float(len(results))
     logging.info('The average silhouette score: {}'.format(avg_silhouette))
