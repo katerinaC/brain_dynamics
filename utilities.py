@@ -82,7 +82,6 @@ def trasform_data(input_path, output_path, n_subjects, n_tasks):
         os.makedirs(output_path)
     data = np.load(input_path)
     data = np.swapaxes(data, 2, 3)
-    print data.shape
     for subject in range(n_subjects):
         for task in range(n_tasks):
             np.savetxt(os.path.join(output_path, 'subject{}_task{}.csv'.format
@@ -272,14 +271,16 @@ def preprocess_autoencoder(input_paths, output_path, brain_areas):
         json.dump(dict, fp)
     n_samples = len(all_paths)
     #dfc_all = np.full((n_samples, brain_areas, brain_areas), fill_value=0).astype(np.float64)
-    dfc_all = np.memmap('merged.buffer', dtype=np.float64, mode='w+',
+    dfc_all = np.memmap('merged_dfcs.buffer', dtype=np.float64, mode='w+',
                        shape=(n_samples, brain_areas, brain_areas))
 
     for p in tqdm(all_paths):
         dfc = np.load(p)['arr_0']
         dfc_all[all_paths.index(p), :, :] = dfc
-
+    with open(os.path.join(output_path, 'number_of_samples.txt'), 'w') as f:
+        f.write('%d' % n_samples)
     #np.savez_compressed(os.path.join(output_path, 'dfc_all'), dfc_all)
+
     return dfc_all, n_samples, y
 
 

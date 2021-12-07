@@ -96,7 +96,7 @@ def kmeans_clustering_mean_score(reduced_components, output_path, n_clusters, TR
     :param n_clusters: number of clusters
     :type n_clusters: int
     :param TR: time repetition
-    :type TR: int
+    :type TR: float
     :return: clustered array, features array with labels
     :rtype: np.ndarray, np.ndarray
     """
@@ -122,7 +122,7 @@ def kmeans_clustering_mean_score(reduced_components, output_path, n_clusters, TR
                                                       clusters_array)
         # save the model to disk
         filename = 'kmeans_model.sav'
-        joblib.dump(os.path.join(silhouette, kmeans), filename)
+        #joblib.dump(os.path.join(output_path, kmeans), filename)
     # average silhouette score
     avg_silhouette = sum(results)/float(len(results))
     logging.info('The average silhouette score: {}'.format(avg_silhouette))
@@ -135,7 +135,7 @@ def kmeans_clustering_mean_score(reduced_components, output_path, n_clusters, TR
     data_clusters = np.hstack((reduced_components, clusters_array))
     np.savez_compressed(os.path.join(output_path, 'concatentated_matrix_clusters'),
              data_clusters)
-    return clusters_array, data_clusters
+    return clusters_array, data_clusters, avg_silhouette, sum_sqr_d
 
 
 def hidden_markov_model(reduced_components, output_path):
@@ -300,11 +300,11 @@ def autoencoder(dfc_all, output_path, y, imbalanced):
 
     # balance dataset
     if imbalanced:
-        rus = RandomUnderSampler(random_state=0, replacement=True)
-        x_resampled, y_resampled = rus.fit_resample(dfc_all_2d, y)
+        #rus = RandomUnderSampler(random_state=0, replacement=True)
+        #x_resampled, y_resampled = rus.fit_resample(dfc_all_2d, y)
 
         # train and test partition
-        x_train_o, x_test_o = train_test_split(x_resampled, test_size=0.10)
+        #x_train_o, x_test_o = train_test_split(x_resampled, test_size=0.10)
         # normalize
         normalizer = preprocessing.Normalizer().fit(x_train_o)
         x_train = normalizer.transform(x_train_o)

@@ -280,6 +280,7 @@ def transition_matrix(states, condition, output_path):
     n = 1 + max(states) # number of states
     M = [[0]*n for _ in range(n)]
 
+    # how many times it changes from state i to state j
     for (i,j) in zip(states, states[1:]):
         M[i][j] += 1
 
