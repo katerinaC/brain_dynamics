@@ -300,11 +300,11 @@ def autoencoder(dfc_all, output_path, y, imbalanced):
 
     # balance dataset
     if imbalanced:
-        #rus = RandomUnderSampler(random_state=0, replacement=True)
-        #x_resampled, y_resampled = rus.fit_resample(dfc_all_2d, y)
+        rus = RandomUnderSampler(random_state=0, replacement=True)
+        x_resampled, y_resampled = rus.fit_resample(dfc_all_2d, y)
 
         # train and test partition
-        #x_train_o, x_test_o = train_test_split(x_resampled, test_size=0.10)
+        x_train_o, x_test_o = train_test_split(x_resampled, test_size=0.10)
         # normalize
         normalizer = preprocessing.Normalizer().fit(x_train_o)
         x_train = normalizer.transform(x_train_o)

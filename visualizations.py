@@ -10,6 +10,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 from matplotlib import cm
+from matplotlib.colors import ListedColormap
 
 sns.set_context("paper")
 
@@ -310,7 +311,8 @@ def plot_silhouette_analysis(X, output_path, n_clusters, silhouette_avg,
 
         color = ['darkorange', 'mediumslateblue', 'mediumaquamarine', 'orchid',
                  'steelblue', 'lightgreen', 'lightslategrey', 'darksalmon',
-                 'tomato', 'turquoise']
+                 'tomato', 'turquoise', 'red', 'green', 'royalblue', 'gold', 'navy', 'violet',
+                 'brown', 'seagreen', 'maroon', 'darkcyan']
         ax1.fill_betweenx(np.arange(y_lower, y_upper),
                           0, ith_cluster_silhouette_values,
                           facecolor=color[i], edgecolor=color[i], alpha=0.7)
@@ -421,13 +423,14 @@ def plot_see_against_n_clusters(list_k, sse, silhouette, output_path):
     # Plot sse against k
     fig, ax1 = plt.subplots()
     ax2 = ax1.twinx()
-    sil = [1-s for s in silhouette]
     ax1.plot(list_k, sse, '-o')
-    ax2.plot(list_k, sil, 'ro-')
+    ax2.plot(list_k, silhouette, 'ro-')
     ax1.set_xlabel(r'Number of clusters *k*')
     ax1.set_ylabel('Sum of squared distance')
     ax2.set_ylabel('Silhouette score')
+    ax2.invert_yaxis()
     plt.savefig(os.path.join(output_path, 'sse_sil_n_clusters.png'))
+    plt.savefig(os.path.join(output_path, 'sse_sil_n_clusters.pdf'))
 
 
 def plot_kl_distance(kl_matrix, conditions, output_path, measure):
@@ -447,15 +450,15 @@ def plot_kl_distance(kl_matrix, conditions, output_path, measure):
     fig.subplots_adjust(bottom=0.3)
     mask = np.zeros_like(kl_matrix, dtype=np.bool)
     mask[np.diag_indices_from(mask)] = True
-    heat_map = sns.heatmap(data=kl_matrix, cmap= 'coolwarm', annot=True,
+    heat_map = sns.heatmap(data=kl_matrix, cmap= 'coolwarm', annot=False,
                            square=True, linewidths=2, linecolor='white',
                            xticklabels=conditions, yticklabels=conditions,
                            mask=mask)
 
     heat_map.set_yticklabels(heat_map.get_yticklabels(), rotation=0, fontsize=14)
     heat_map.set_xticklabels(heat_map.get_xticklabels(), rotation=90, fontsize=14)
-
-    plt.savefig(os.path.join(output_path, '{}_matrix_heatmap.png'.format(measure)))
+    #plt.axis('off')
+    plt.savefig(os.path.join(output_path, '{}_matrix_heatmap.pdf'.format(measure)))
 
 
 def plot_ent_boxplot(df_ent, output_path):
@@ -488,14 +491,18 @@ def plot_transition_matrix(trans_m, condition, output_path):
     :param output_path: path to output directory
     :type output_path: str
     """
+    newcolors = ['#00429d', '#2854a6', '#3e67ae', '#507bb7', '#618fbf',
+                 '#73a2c6', '#85b7ce', '#9acbd5',  '#cdf1e0', '#ffaaa1',
+                 '#ef727a', '#ba254a', '#84002f']
+    newcmp = ListedColormap(newcolors)
     n_states = len(trans_m[0])
     sns.set_style("ticks", {"xtick.major.size": 17, "ytick.major.size": 17})
     sns.set_context("talk")
     fig, ax = plt.subplots(1)
-    ax = sns.heatmap(trans_m, annot=True, cmap='coolwarm', annot_kws={"size": 17},
-                     xticklabels = [i + 1 for i in range(n_states)], yticklabels =  [i + 1 for i in range(n_states)],
-                     vmin=0, vmax=0.20, center=0.10)
+    ax = sns.heatmap(trans_m, annot=False, cmap=newcmp, annot_kws={"size": 17},
+                     xticklabels=[i + 1 for i in range(n_states)], yticklabels=[i + 1 for i in range(n_states)],
+                     vmin=0.04, vmax=0.20, center=0.10)
     cbar = ax.collections[0].colorbar
-    # here set the labelsize by 20
     cbar.ax.tick_params(labelsize=17)
-    plt.savefig(os.path.join(output_path, 'transition_matrix_{}_{}.png'.format(n_states, condition)))
+    plt.axis('off')
+    plt.savefig(os.path.join(output_path, 'transition_matrix_{}_{}.pdf'.format(n_states, condition)))
