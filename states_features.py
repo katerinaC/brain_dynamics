@@ -19,7 +19,7 @@ from utilities import create_dir
 
 def probability_of_state(clusters, n_clusters, output_path):
     """
-    Computes the probability of a state.
+    Computes the probability of states.
 
     :param clusters: clusters array
     :type clusters: np.ndarray
@@ -46,7 +46,7 @@ def probability_of_state(clusters, n_clusters, output_path):
 
 def mean_lifetime_of_state(clusters, n_clusters, output_path, TR):
     """
-    Computes the mean lifetime of a state.
+    Computes the mean lifetime of states.
 
     :param clusters: clusters array
     :type clusters: np.ndarray

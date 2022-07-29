@@ -1,3 +1,9 @@
+### Script for a published paper:
+
+Capouskova, K ., Kringelbach, M.L. & Deco, G. Modes of cognition: Evidence from 
+metastable brain dynamics. Neuroimage 260, 119489 (2022). doi: 10.1016/J.NEUROIMAGE.2022.119489
+
+
 # Functional Connectivity (FC) States
 
 This repository contains Python code for calculating fMRI's
